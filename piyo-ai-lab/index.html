@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piyo AI Lab - AIの知識レベルをひよこからにわとりへ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #F2C94C;
+            --primary-light: #FFF8E1;
+            --primary-dark: #D4A017;
+            --accent: #5BA89D;
+            --accent-light: #E8F5F2;
+            --accent2: #E07B8B;
+            --bg: #FBF9F5;
+            --bg-warm: #FFF8ED;
+            --bg-hero: #FFF3D6;
+            --text-dark: #3D3832;
+            --text-mid: #7A7168;
+            --text-light: #ADA49A;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            --card-shadow-hover: 0 4px 16px rgba(0,0,0,0.07);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Zen Maru Gothic', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-dark);
+            line-height: 1.85;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #EDE8DF;
+        }
+
+        .header-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-area img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .logo-text {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-dark);
+            letter-spacing: 0;
+        }
+
+        .logo-text span { color: var(--accent); }
+
+        nav { display: flex; gap: 4px; align-items: center; }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-mid);
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: all 0.15s;
+        }
+
+        nav a:hover {
+            color: var(--text-dark);
+            background: var(--bg-warm);
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            background: var(--bg-hero);
+            padding: 48px 24px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: var(--bg);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        }
+
+        .hero::after { display: none; }
+
+        .hero-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text { flex: 1; }
+
+        .hero-text h1 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            color: var(--text-dark);
+            letter-spacing: 0;
+        }
+
+        .hero-text h1 .highlight {
+            color: var(--accent);
+            background: none;
+            -webkit-text-fill-color: var(--accent);
+            position: relative;
+        }
+
+        .hero-text h1 .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--primary);
+            opacity: 0.35;
+            border-radius: 3px;
+            z-index: -1;
+        }
+
+        .hero-text .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-mid);
+            margin-bottom: 20px;
+            line-height: 1.9;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-mid);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        .badge.accent { color: var(--accent); background: var(--accent-light); }
+        .badge.pink { color: var(--accent2); background: #FDF2F5; }
+
+        .hero-mascot {
+            flex-shrink: 0;
+            width: 220px;
+            height: 220px;
+            animation: gentle-bob 5s ease-in-out infinite;
+            position: relative;
+        }
+
+        .hero-mascot img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: none;
+        }
+
+        /* ピヨの吹き出し */
+        .hero-mascot::after {
+            content: 'ピヨ!';
+            position: absolute;
+            top: -8px;
+            right: -10px;
+            background: white;
+            color: var(--text-dark);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        @keyframes gentle-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* ===== FRIENDS INTRO ===== */
+        .friends-section {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 36px 24px 28px;
+        }
+
+        .friends-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .friends-card h2 {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            font-family: 'Zen Maru Gothic', sans-serif;
+        }
+
+        .friends-chars {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .friends-char {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .friends-char img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: white;
+        }
+
+        .friends-char-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .friends-heart {
+            font-size: 1.6rem;
+            line-height: 1;
+            margin-bottom: 16px;
+        }
+
+        .friends-desc {
+            font-size: 0.88rem;
+            color: var(--text-mid);
+            line-height: 1.8;
+        }
+
+        .friends-desc a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .friends-desc a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .friends-char img { width: 72px; height: 72px; }
+        }
+
+        /* ===== SECTION ===== */
+        .section-title {
+            text-align: left;
+            margin-bottom: 28px;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .section-title h2 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .section-title p {
+            color: var(--text-mid);
+            font-size: 0.82rem;
+            padding-left: 16px;
+        }
+
+        /* ===== LEVEL GUIDE ===== */
+        .level-guide {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 36px 24px 12px;
+        }
+
+        .level-guide-heading {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .level-guide-label {
+            display: inline-block;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            background: var(--primary-light);
+            padding: 4px 18px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+
+        .level-guide-heading p {
+            font-size: 0.8rem;
+            color: var(--text-mid);
+            margin-top: 6px;
+        }
+
+        .level-guide-inner {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .level-card {
+            flex: 1;
+            min-width: 200px;
+            max-width: 280px;
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px 18px;
+            text-align: center;
+            border: 1px solid #EDE8DF;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .level-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .level-card.lv-beginner::before { background: var(--accent); }
+        .level-card.lv-intermediate::before { background: var(--primary); }
+        .level-card.lv-advanced::before { background: var(--accent2); }
+
+        .level-card-emoji {
+            font-size: 2.2rem;
+            margin-bottom: 6px;
+            line-height: 1;
+        }
+
+        .level-card-name {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .level-card.lv-beginner .level-card-name { color: var(--accent); }
+        .level-card.lv-intermediate .level-card-name { color: var(--primary-dark); }
+        .level-card.lv-advanced .level-card-name { color: var(--accent2); }
+
+        .level-card-desc {
+            font-size: 0.78rem;
+            color: var(--text-mid);
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .level-card-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .level-topic {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: var(--bg);
+            color: var(--text-mid);
+            border: 1px solid #EDE8DF;
+        }
+
+        .lv-beginner .level-topic {
+            background: var(--accent-light);
+            border-color: transparent;
+            color: var(--accent);
+        }
+
+        .lv-intermediate .level-topic {
+            background: var(--primary-light);
+            border-color: transparent;
+            color: var(--primary-dark);
+        }
+
+        .lv-advanced .level-topic {
+            background: #FDF2F5;
+            border-color: transparent;
+            color: var(--accent2);
+        }
+
+        /* ===== CATEGORIES ===== */
+        .categories {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 24px 4px;
+        }
+
+        .cat-grid {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        .cat-btn {
+            background: white;
+            border: 1px solid #E8E4DC;
+            border-radius: 20px;
+            padding: 7px 18px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-mid);
+            font-family: inherit;
+        }
+
+        .cat-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--text-dark);
+        }
+
+        .cat-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--text-dark);
+        }
+
+        /* ===== ARTICLES ===== */
+        .articles {
+            max-width: 960px;
+            margin: 0 auto 48px;
+            padding: 28px 24px 0;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .article-card {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: 1px solid #EDE8DF;
+        }
+
+        .article-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .card-thumb {
+            height: 170px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-thumb-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-thumb .piyo-watermark {
+            width: 40px;
+            height: 40px;
+            opacity: 0.08;
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+        }
+
+        .card-category {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(61,56,50,0.7);
+            border-radius: 16px;
+            padding: 3px 12px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .card-level {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.92);
+            border-radius: 16px;
+            padding: 3px 12px;
+            font-size: 0.66rem;
+            font-weight: 700;
+        }
+
+        .level-beginner { color: #5BA89D; }
+        .level-intermediate { color: #D4A017; }
+        .level-advanced { color: #C96B6B; }
+
+        .card-body { padding: 16px 18px; }
+
+        .card-body h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            line-height: 1.55;
+            letter-spacing: 0;
+        }
+
+        .card-body p {
+            font-size: 0.8rem;
+            color: var(--text-mid);
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.74rem;
+            color: var(--text-light);
+            border-top: 1px dashed #EDE8DF;
+            padding-top: 10px;
+        }
+
+        .card-views {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-rating {
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+        }
+
+        .empty-state img {
+            width: 80px;
+            opacity: 0.2;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 1rem;
+            color: var(--text-mid);
+            margin-bottom: 4px;
+        }
+
+        .empty-state p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 24px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            max-width: 760px;
+            width: 100%;
+            padding: 36px;
+            position: relative;
+            animation: slideUp 0.2s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(12px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 14px; right: 14px;
+            background: var(--bg-warm);
+            border: none;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .modal-close:hover { background: #EDE8DF; }
+
+        .modal-header { margin-bottom: 20px; }
+        .modal-header h2 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            letter-spacing: 0;
+        }
+
+        .modal-meta {
+            display: flex;
+            gap: 14px;
+            font-size: 0.8rem;
+            color: var(--text-mid);
+            flex-wrap: wrap;
+        }
+
+        .modal-body {
+            line-height: 2;
+            font-size: 0.92rem;
+            margin-bottom: 28px;
+        }
+
+        .modal-body h3 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.05rem;
+            margin: 28px 0 12px;
+            padding: 8px 14px;
+            background: var(--bg-warm);
+            border-radius: 8px;
+            border-left: none;
+        }
+
+        .modal-body p { margin-bottom: 16px; }
+
+        .modal-body code {
+            background: var(--primary-light);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.86rem;
+        }
+
+        .modal-body pre {
+            background: #3D3832;
+            color: #E8E0D4;
+            padding: 16px;
+            border-radius: var(--radius);
+            overflow-x: auto;
+            margin: 16px 0;
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+
+        /* ===== RATING ===== */
+        .rating-section {
+            border-top: 1px dashed #EDE8DF;
+            padding-top: 24px;
+            text-align: center;
+            background: var(--bg-warm);
+            margin: 0 -36px -36px;
+            padding: 24px 36px 28px;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+
+        .rating-section h4 { font-size: 0.95rem; margin-bottom: 4px; }
+
+        .rating-section > p {
+            font-size: 0.8rem;
+            color: var(--text-mid);
+            margin-bottom: 12px;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #E0D9CF;
+            transition: color 0.15s, transform 0.1s;
+        }
+
+        .star-btn:hover { transform: scale(1.1); }
+        .star-btn.active { color: var(--primary); }
+
+        .rating-submit {
+            background: var(--primary);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 28px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+
+        .rating-submit:hover { opacity: 0.85; }
+
+        .rating-thanks {
+            display: none;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.92rem;
+            margin-top: 8px;
+        }
+
+        /* ===== Q&A SECTION ===== */
+        .qa-section {
+            max-width: 960px;
+            margin: 0 auto 48px;
+            padding: 0 24px;
+        }
+
+        .qa-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 36px;
+        }
+
+        .qa-item {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: transform 0.15s;
+            border: 1px solid #EDE8DF;
+        }
+
+        .qa-item:hover { transform: translateY(-2px); }
+
+        .qa-question {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+
+        .qa-icon {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+
+        .qa-icon.q { background: var(--primary-light); color: var(--primary-dark); }
+        .qa-icon.a { background: var(--accent-light); color: var(--accent); }
+
+        .qa-question-text { flex: 1; }
+
+        .qa-question-text h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .qa-question-meta {
+            font-size: 0.74rem;
+            color: var(--text-light);
+        }
+
+        .qa-toggle {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: transform 0.2s;
+            padding: 4px;
+        }
+
+        .qa-toggle.open { transform: rotate(180deg); }
+
+        .qa-answer {
+            display: none;
+            padding: 0 20px 18px;
+            border-top: 1px dashed #EDE8DF;
+        }
+
+        .qa-answer.open { display: block; }
+
+        .qa-answer-inner {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding-top: 14px;
+        }
+
+        .qa-answer-text {
+            flex: 1;
+            font-size: 0.88rem;
+            color: var(--text-mid);
+            line-height: 1.9;
+        }
+
+        .qa-answer-text .piyo-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        .qa-answer-text .piyo-label img {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .qa-empty {
+            text-align: center;
+            padding: 36px 24px;
+            color: var(--text-light);
+        }
+
+        .qa-empty img {
+            width: 60px;
+            opacity: 0.15;
+            margin-bottom: 10px;
+        }
+
+        /* Q&A Form */
+        .qa-form-card {
+            background: var(--bg-warm);
+            border-radius: var(--radius);
+            box-shadow: none;
+            padding: 28px;
+            border: 1px dashed #D8CEBC;
+        }
+
+        .qa-form-card h3 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qa-form-card h3 img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+        }
+
+        .qa-form-card > p {
+            font-size: 0.82rem;
+            color: var(--text-mid);
+            margin-bottom: 18px;
+        }
+
+        .qa-form-group { margin-bottom: 14px; }
+
+        .qa-form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-mid);
+        }
+
+        .qa-form-group input,
+        .qa-form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #E0D9CF;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            background: #fff;
+        }
+
+        .qa-form-group input:focus,
+        .qa-form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(242,201,76,0.15);
+        }
+
+        .qa-form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .qa-submit-btn {
+            background: var(--primary);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 28px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.15s;
+            font-family: inherit;
+        }
+
+        .qa-submit-btn:hover { opacity: 0.85; transform: scale(1.02); }
+
+        .qa-success-msg {
+            display: none;
+            background: var(--accent-light);
+            color: var(--accent);
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--bg-warm);
+            color: var(--text-dark);
+            padding: 36px 24px 28px;
+            text-align: center;
+            border-top: 1px dashed #D8CEBC;
+        }
+
+        .footer-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .footer-inner img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+        }
+
+        .footer-logo {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .footer-logo span { color: var(--accent); }
+
+        .footer-social {
+            margin: 18px 0 14px;
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+        }
+
+        .footer-social-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: transform 0.15s;
+        }
+
+        .footer-social-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .footer-social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .footer-social-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: var(--text-mid);
+            color: var(--text-mid);
+        }
+
+        .footer-social-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .footer-social-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-mid);
+        }
+
+        .footer-social a:hover svg {
+            fill: var(--accent2);
+            color: var(--accent2);
+        }
+
+        footer p {
+            font-size: 0.74rem;
+            color: var(--text-light);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero-inner { flex-direction: column-reverse; text-align: center; gap: 16px; }
+            .hero-mascot { width: 140px; height: 140px; }
+            .hero-text h1 { font-size: 1.4rem; }
+            .badge-row { justify-content: center; }
+            .articles-grid { grid-template-columns: 1fr; }
+            .modal-content { padding: 24px; }
+            .section-title { text-align: center; }
+            .section-title p { padding-left: 0; }
+            .rating-section { margin: 0 -24px -24px; padding: 20px 24px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-inner">
+            <a class="logo-area" href="index.html">
+                <img src="images/piyo-character.png" alt="Piyo">
+                <div class="logo-text">Piyo <span>AI</span> Lab</div>
+            </a>
+            <nav>
+                <a href="#articles-section">よみもの</a>
+                <a href="#qa-section">Q&A</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="hero-text">
+                <h1>AIのこと、<br><span class="highlight">ピヨと一緒に学びませんか？</span></h1>
+                <p class="subtitle">「AIって何ができるの？」――そんな疑問からで大丈夫です。<br>一歩ずつ、あなたのペースで学んでいきましょう。</p>
+                <div class="badge-row">
+                    <span class="badge">AI入門</span>
+                    <span class="badge accent">ワークフロー</span>
+                    <span class="badge pink">最新トレンド</span>
+                </div>
+            </div>
+            <div class="hero-mascot">
+                <img src="images/piyo-character.png" alt="Piyo AI Lab マスコット">
+            </div>
+        </div>
+    </section>
+
+    <!-- FRIENDS INTRO -->
+    <section class="friends-section">
+        <div class="friends-card">
+            <h2>Piyo AI Lab のなかまたち</h2>
+            <div class="friends-chars">
+                <div class="friends-char">
+                    <img src="images/piyo-character.png" alt="ピヨ">
+                    <span class="friends-char-name">ピヨ</span>
+                </div>
+                <div class="friends-heart">🤝</div>
+                <div class="friends-char">
+                    <img src="images/tomo-icon.png" alt="トモ">
+                    <span class="friends-char-name">トモ</span>
+                </div>
+            </div>
+            <p class="friends-desc">
+                AI学習ナビゲーターの<strong>ピヨ</strong>と、AIコミュニティ
+                <a href="https://www.skool.com/tomolab-free" target="_blank" rel="noopener noreferrer">トモラボ</a>
+                の看板犬<strong>トモ</strong>は大の仲良し。<br>
+                ピヨが記事でやさしく解説して、トモがみんなの学びを応援します！
+            </p>
+        </div>
+    </section>
+
+    <!-- LEVEL GUIDE -->
+    <section class="level-guide">
+        <div class="level-guide-heading">
+            <span class="level-guide-label">記事の難易度について</span>
+            <p>各記事には、内容の難しさに応じたレベルが設定されています。<br>ご自身のペースに合わせてお読みください。</p>
+        </div>
+        <div class="level-guide-inner">
+            <div class="level-card lv-beginner">
+                <div class="level-card-emoji">🐣</div>
+                <div class="level-card-name">ひよこ</div>
+                <div class="level-card-desc">AIに初めて触れる方向けの入門記事です。</div>
+                <div class="level-card-topics">
+                    <span class="level-topic">用語解説</span>
+                    <span class="level-topic">基本の使い方</span>
+                    <span class="level-topic">はじめの一歩</span>
+                </div>
+            </div>
+            <div class="level-card lv-intermediate">
+                <div class="level-card-emoji">🐥</div>
+                <div class="level-card-name">育ち盛り</div>
+                <div class="level-card-desc">基本を押さえた方向けの中級記事です。</div>
+                <div class="level-card-topics">
+                    <span class="level-topic">実践的な活用法</span>
+                    <span class="level-topic">便利な機能</span>
+                    <span class="level-topic">比較・選び方</span>
+                </div>
+            </div>
+            <div class="level-card lv-advanced">
+                <div class="level-card-emoji">🐔</div>
+                <div class="level-card-name">にわとり</div>
+                <div class="level-card-desc">AIを深く活用したい方向けの上級記事です。</div>
+                <div class="level-card-topics">
+                    <span class="level-topic">ワークフロー構築</span>
+                    <span class="level-topic">応用テクニック</span>
+                    <span class="level-topic">ツール連携</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CATEGORIES -->
+    <section class="categories">
+        <div class="cat-grid" id="cat-grid"></div>
+    </section>
+
+    <!-- ARTICLES -->
+    <section class="articles" id="articles-section">
+        <div class="section-title">
+            <h2>よみもの</h2>
+            <p>AIに関する記事をお届けしています</p>
+        </div>
+        <div class="articles-grid" id="articles-grid"></div>
+    </section>
+
+    <!-- Q&A SECTION -->
+    <section class="qa-section" id="qa-section">
+        <div class="section-title">
+            <h2>みんなのQ&A</h2>
+            <p>よくあるご質問とその回答をまとめています</p>
+        </div>
+        <div class="qa-list" id="qa-list"></div>
+
+        <!-- 質問フォーム -->
+        <div class="qa-form-card">
+            <h3><img src="images/piyo-character.png" alt="Piyo"> ピヨに質問する</h3>
+            <p>AIに関する疑問がありましたら、お気軽にお寄せください。</p>
+            <div class="qa-form-group">
+                <label>お名前（ニックネームOK）</label>
+                <input type="text" id="qa-name" placeholder="例: AIビギナー太郎">
+            </div>
+            <div class="qa-form-group">
+                <label>質問内容</label>
+                <textarea id="qa-question-input" placeholder="例: ChatGPTとClaudeの違いって何ですか？"></textarea>
+            </div>
+            <button class="qa-submit-btn" id="qa-submit-btn">質問を送信する</button>
+            <div class="qa-success-msg" id="qa-success-msg">ご質問ありがとうございます。回答までしばらくお待ちください。</div>
+        </div>
+    </section>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div class="modal-header" id="modal-header"></div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="rating-section" id="rating-section">
+                <h4>この記事はいかがでしたか？</h4>
+                <p>よろしければ評価をお願いします</p>
+                <div class="star-rating" id="star-rating">
+                    <button class="star-btn" data-star="1">&#9733;</button>
+                    <button class="star-btn" data-star="2">&#9733;</button>
+                    <button class="star-btn" data-star="3">&#9733;</button>
+                    <button class="star-btn" data-star="4">&#9733;</button>
+                    <button class="star-btn" data-star="5">&#9733;</button>
+                </div>
+                <button class="rating-submit" id="rating-submit">評価を送信</button>
+                <div class="rating-thanks" id="rating-thanks">ご評価ありがとうございます。大変励みになります。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-inner">
+            <img src="images/piyo-character.png" alt="Piyo">
+            <div class="footer-logo">Piyo <span>AI</span> Lab</div>
+        </div>
+        <div class="footer-social">
+            <a href="https://www.instagram.com/piyoailab?igsh=MWwxMDR3YnZhb3p2YQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+                <div class="footer-social-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                </div>
+                <span class="footer-social-label">Instagram</span>
+            </a>
+            <a href="https://www.skool.com/tomolab-free" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+                <div class="footer-social-icon">
+                    <img src="images/tomo-icon.png" alt="トモラボ">
+                </div>
+                <span class="footer-social-label">トモラボ</span>
+            </a>
+            <a href="https://www.skool.com/tomolab-plus" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+                <div class="footer-social-icon">
+                    <img src="images/tomo-plus-icon.png" alt="トモラボ＋">
+                </div>
+                <span class="footer-social-label">トモラボ＋</span>
+            </a>
+        </div>
+        <p>&copy; 2026 Piyo AI Lab. AIの知識をわかりやすくお届けします</p>
+    </footer>
+
+    <script>
+        // ===== DATA STORE =====
+        const STORAGE_KEY = 'piyo_ai_lab_data';
+
+        function loadData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) return JSON.parse(saved);
+            return { articles: [] };
+        }
+
+        function saveData(d) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+        }
+
+        // ===== STATE =====
+        let data = loadData();
+        let activeCategory = 'all';
+        let currentArticleId = null;
+        let selectedRating = 0;
+
+        // ===== HELPERS =====
+        function avgRating(ratings) {
+            if (!ratings || !ratings.length) return '-';
+            return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+        }
+
+        // ===== RENDER CATEGORIES =====
+        function renderCategories() {
+            if (!data.articles.length) {
+                document.getElementById('cat-grid').innerHTML = '';
+                return;
+            }
+            const cats = ['all', ...new Set(data.articles.map(a => a.category))];
+            const labels = { all: 'すべて' };
+            document.getElementById('cat-grid').innerHTML = cats.map(c =>
+                `<button class="cat-btn ${c === activeCategory ? 'active' : ''}" data-cat="${c}">${labels[c] || c}</button>`
+            ).join('');
+
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeCategory = btn.dataset.cat;
+                    renderCategories();
+                    renderArticles();
+                });
+            });
+        }
+
+        // ===== RENDER ARTICLES =====
+        function renderArticles() {
+            const filtered = activeCategory === 'all'
+                ? data.articles
+                : data.articles.filter(a => a.category === activeCategory);
+
+            if (!filtered.length) {
+                document.getElementById('articles-grid').innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1">
+                        <img src="images/piyo-character.png" alt="Piyo">
+                        <h3>まだ記事がありません</h3>
+                        <p>記事の公開までもうしばらくお待ちください</p>
+                    </div>
+                `;
+                return;
+            }
+
+            document.getElementById('articles-grid').innerHTML = filtered.map(a => {
+                const thumbStyle = a.thumbImage
+                    ? ''
+                    : `background: ${a.thumb || 'linear-gradient(135deg, #a8e6cf, #dcedc1)'};`;
+                const thumbImg = a.thumbImage
+                    ? `<img class="card-thumb-img" src="${a.thumbImage}" alt="">`
+                    : '';
+                return `
+                <div class="article-card" data-id="${a.id}">
+                    <div class="card-thumb" style="${thumbStyle}">
+                        ${thumbImg}
+                        <img class="piyo-watermark" src="images/piyo-character.png" alt="">
+                        <span class="card-category">${a.category}</span>
+                        <span class="card-level level-${a.level}">${a.levelLabel}</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>${a.title}</h3>
+                        <p>${a.excerpt}</p>
+                        <div class="card-meta">
+                            <span>${a.date}</span>
+                            <span class="card-views">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                ${(a.views || 0).toLocaleString()}
+                            </span>
+                            <span class="card-rating">★ ${avgRating(a.ratings)}</span>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+
+            document.querySelectorAll('.article-card').forEach(card => {
+                card.addEventListener('click', () => openArticle(parseInt(card.dataset.id)));
+            });
+        }
+
+        // ===== OPEN ARTICLE =====
+        function openArticle(id) {
+            const article = data.articles.find(a => a.id === id);
+            if (!article) return;
+
+            currentArticleId = id;
+            selectedRating = 0;
+
+            article.views = (article.views || 0) + 1;
+            saveData(data);
+
+            document.getElementById('modal-header').innerHTML = `
+                <h2>${article.title}</h2>
+                <div class="modal-meta">
+                    <span>${article.category}</span>
+                    <span>${article.levelLabel}レベル</span>
+                    <span>${article.date}</span>
+                    <span>閲覧数 ${article.views.toLocaleString()}</span>
+                    <span>★ ${avgRating(article.ratings)}</span>
+                </div>
+            `;
+            document.getElementById('modal-body').innerHTML = article.content;
+
+            document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('active'));
+            document.getElementById('rating-submit').style.display = '';
+            document.getElementById('rating-thanks').style.display = 'none';
+
+            document.getElementById('modal-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            renderArticles();
+        }
+
+        // ===== CLOSE MODAL =====
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+            currentArticleId = null;
+        }
+
+        document.getElementById('modal-close').addEventListener('click', closeModal);
+        document.getElementById('modal-overlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal-overlay')) closeModal();
+        });
+
+        // ===== STAR RATING =====
+        document.querySelectorAll('.star-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                const val = parseInt(btn.dataset.star);
+                document.querySelectorAll('.star-btn').forEach(s => {
+                    s.classList.toggle('active', parseInt(s.dataset.star) <= val);
+                });
+            });
+            btn.addEventListener('click', () => {
+                selectedRating = parseInt(btn.dataset.star);
+            });
+        });
+
+        document.getElementById('star-rating').addEventListener('mouseleave', () => {
+            document.querySelectorAll('.star-btn').forEach(s => {
+                s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating);
+            });
+        });
+
+        document.getElementById('rating-submit').addEventListener('click', () => {
+            if (selectedRating === 0 || !currentArticleId) return;
+            const article = data.articles.find(a => a.id === currentArticleId);
+            if (article) {
+                if (!article.ratings) article.ratings = [];
+                article.ratings.push(selectedRating);
+                saveData(data);
+                document.getElementById('rating-submit').style.display = 'none';
+                document.getElementById('rating-thanks').style.display = 'block';
+                renderArticles();
+            }
+        });
+
+        // ===== Q&A =====
+        function renderQA() {
+            const questions = (data.questions || []).filter(q => q.status === 'published' && q.answer);
+            const list = document.getElementById('qa-list');
+
+            if (!questions.length) {
+                list.innerHTML = `
+                    <div class="qa-empty">
+                        <img src="images/piyo-character.png" alt="Piyo">
+                        <p>まだ質問はありません。ぜひ最初の質問をお寄せください。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = questions.map((q, i) => `
+                <div class="qa-item">
+                    <div class="qa-question" onclick="toggleQA(this)">
+                        <div class="qa-icon q">Q</div>
+                        <div class="qa-question-text">
+                            <h4>${escapeHTML(q.question)}</h4>
+                            <div class="qa-question-meta">${escapeHTML(q.name)} さん・${q.date}</div>
+                        </div>
+                        <button class="qa-toggle">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                    </div>
+                    <div class="qa-answer">
+                        <div class="qa-answer-inner">
+                            <div class="qa-icon a">A</div>
+                            <div class="qa-answer-text">
+                                <div class="piyo-label"><img src="images/piyo-character.png" alt="Piyo"> Piyo AI Lab</div>
+                                <div>${q.answer}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleQA(el) {
+            const item = el.closest('.qa-item');
+            const answer = item.querySelector('.qa-answer');
+            const toggle = item.querySelector('.qa-toggle');
+            answer.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Q&A submit
+        document.getElementById('qa-submit-btn').addEventListener('click', () => {
+            const name = document.getElementById('qa-name').value.trim();
+            const question = document.getElementById('qa-question-input').value.trim();
+
+            if (!name || !question) {
+                alert('お名前と質問内容を入力してください');
+                return;
+            }
+
+            if (!data.questions) data.questions = [];
+
+            const today = new Date().toISOString().split('T')[0];
+            data.questions.push({
+                id: data.questions.length ? Math.max(...data.questions.map(q => q.id)) + 1 : 1,
+                name: name,
+                question: question,
+                answer: '',
+                date: today,
+                status: 'pending'
+            });
+
+            saveData(data);
+
+            document.getElementById('qa-name').value = '';
+            document.getElementById('qa-question-input').value = '';
+            document.getElementById('qa-success-msg').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('qa-success-msg').style.display = 'none';
+            }, 4000);
+        });
+
+        // ===== INIT =====
+        renderCategories();
+        renderArticles();
+        renderQA();
+
+        // Auto-refresh when data changes from admin page
+        window.addEventListener('storage', (e) => {
+            if (e.key === STORAGE_KEY) {
+                data = loadData();
+                renderCategories();
+                renderArticles();
+                renderQA();
+            }
+        });
+    </script>
+</body>
+</html>
