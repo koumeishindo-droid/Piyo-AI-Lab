@@ -1,0 +1,8 @@
+{
+  "name": "piyo-ai-lab",
+  "version": "1.0.0",
+  "description": "Piyo AI Lab - Notion連携版",
+  "dependencies": {
+    "@notionhq/client": "^2.2.0"
+  }
+}
