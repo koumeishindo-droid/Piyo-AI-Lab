@@ -1308,282 +1308,261 @@
         <p>&copy; 2026 Piyo AI Lab. AIの知識をわかりやすくお届けします</p>
     </footer>
 
-    <script>
-        // ===== DATA STORE =====
-        const STORAGE_KEY = 'piyo_ai_lab_data';
+<script>
+    // ============================================
+    // Notion連携版 - データ取得を API 経由に変更
+    // ※ Q&Aは回答・ステータスなし（質問の受付と一覧のみ）
+    // ============================================
 
-        function loadData() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) return JSON.parse(saved);
-            return { articles: [] };
-        }
+    // ★ ここにあなたの Vercel デプロイ先 URL を入れてください
+    // 例: https://piyo-ai-lab.vercel.app
+    const API_BASE = '';  // ← デプロイ後に URL を設定
 
-        function saveData(d) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-        }
+    // ===== STATE =====
+    let data = { articles: [], questions: [] };
+    let activeCategory = 'all';
+    let currentArticleId = null;
+    let selectedRating = 0;
 
-        // ===== STATE =====
-        let data = loadData();
-        let activeCategory = 'all';
-        let currentArticleId = null;
-        let selectedRating = 0;
-
-        // ===== HELPERS =====
-        function avgRating(ratings) {
-            if (!ratings || !ratings.length) return '-';
-            return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
-        }
-
-        // ===== RENDER CATEGORIES =====
-        function renderCategories() {
-            if (!data.articles.length) {
-                document.getElementById('cat-grid').innerHTML = '';
-                return;
-            }
-            const cats = ['all', ...new Set(data.articles.map(a => a.category))];
-            const labels = { all: 'すべて' };
-            document.getElementById('cat-grid').innerHTML = cats.map(c =>
-                `<button class="cat-btn ${c === activeCategory ? 'active' : ''}" data-cat="${c}">${labels[c] || c}</button>`
-            ).join('');
-
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    activeCategory = btn.dataset.cat;
-                    renderCategories();
-                    renderArticles();
-                });
-            });
-        }
-
-        // ===== RENDER ARTICLES =====
-        function renderArticles() {
-            const filtered = activeCategory === 'all'
-                ? data.articles
-                : data.articles.filter(a => a.category === activeCategory);
-
-            if (!filtered.length) {
-                document.getElementById('articles-grid').innerHTML = `
-                    <div class="empty-state" style="grid-column:1/-1">
-                        <img src="images/piyo-character.png" alt="Piyo">
-                        <h3>まだ記事がありません</h3>
-                        <p>記事の公開までもうしばらくお待ちください</p>
-                    </div>
-                `;
-                return;
-            }
-
-            document.getElementById('articles-grid').innerHTML = filtered.map(a => {
-                const thumbStyle = a.thumbImage
-                    ? ''
-                    : `background: ${a.thumb || 'linear-gradient(135deg, #a8e6cf, #dcedc1)'};`;
-                const thumbImg = a.thumbImage
-                    ? `<img class="card-thumb-img" src="${a.thumbImage}" alt="">`
-                    : '';
-                return `
-                <div class="article-card" data-id="${a.id}">
-                    <div class="card-thumb" style="${thumbStyle}">
-                        ${thumbImg}
-                        <img class="piyo-watermark" src="images/piyo-character.png" alt="">
-                        <span class="card-category">${a.category}</span>
-                        <span class="card-level level-${a.level}">${a.levelLabel}</span>
-                    </div>
-                    <div class="card-body">
-                        <h3>${a.title}</h3>
-                        <p>${a.excerpt}</p>
-                        <div class="card-meta">
-                            <span>${a.date}</span>
-                            <span class="card-views">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                ${(a.views || 0).toLocaleString()}
-                            </span>
-                            <span class="card-rating">★ ${avgRating(a.ratings)}</span>
-                        </div>
-                    </div>
-                </div>
-            `}).join('');
-
-            document.querySelectorAll('.article-card').forEach(card => {
-                card.addEventListener('click', () => openArticle(parseInt(card.dataset.id)));
-            });
-        }
-
-        // ===== OPEN ARTICLE =====
-        function openArticle(id) {
-            const article = data.articles.find(a => a.id === id);
-            if (!article) return;
-
-            currentArticleId = id;
-            selectedRating = 0;
-
-            article.views = (article.views || 0) + 1;
-            saveData(data);
-
-            document.getElementById('modal-header').innerHTML = `
-                <h2>${article.title}</h2>
-                <div class="modal-meta">
-                    <span>${article.category}</span>
-                    <span>${article.levelLabel}レベル</span>
-                    <span>${article.date}</span>
-                    <span>閲覧数 ${article.views.toLocaleString()}</span>
-                    <span>★ ${avgRating(article.ratings)}</span>
-                </div>
-            `;
-            document.getElementById('modal-body').innerHTML = article.content;
-
-            document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('active'));
-            document.getElementById('rating-submit').style.display = '';
-            document.getElementById('rating-thanks').style.display = 'none';
-
-            document.getElementById('modal-overlay').classList.add('active');
-            document.body.style.overflow = 'hidden';
-
+    // ===== Notion API からデータを取得 =====
+    async function fetchArticles() {
+        try {
+            const res = await fetch(API_BASE + '/api/articles');
+            const json = await res.json();
+            data.articles = json.articles || [];
+            renderCategories();
             renderArticles();
+        } catch (e) {
+            console.error('記事の取得に失敗:', e);
         }
+    }
 
-        // ===== CLOSE MODAL =====
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.remove('active');
-            document.body.style.overflow = '';
-            currentArticleId = null;
+    async function fetchQuestions() {
+        try {
+            const res = await fetch(API_BASE + '/api/questions');
+            const json = await res.json();
+            data.questions = json.questions || [];
+            renderQA();
+        } catch (e) {
+            console.error('Q&Aの取得に失敗:', e);
         }
+    }
 
-        document.getElementById('modal-close').addEventListener('click', closeModal);
-        document.getElementById('modal-overlay').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('modal-overlay')) closeModal();
-        });
+    // ===== HELPERS =====
+    function avgRating(ratings) {
+        if (!ratings || !ratings.length) return '-';
+        return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+    }
 
-        // ===== STAR RATING =====
-        document.querySelectorAll('.star-btn').forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                const val = parseInt(btn.dataset.star);
-                document.querySelectorAll('.star-btn').forEach(s => {
-                    s.classList.toggle('active', parseInt(s.dataset.star) <= val);
-                });
-            });
+    // ===== RENDER CATEGORIES =====
+    function renderCategories() {
+        if (!data.articles.length) {
+            document.getElementById('cat-grid').innerHTML = '';
+            return;
+        }
+        const cats = ['all', ...new Set(data.articles.map(a => a.category))];
+        const labels = { all: 'すべて' };
+        document.getElementById('cat-grid').innerHTML = cats.map(c =>
+            `<button class="cat-btn ${c === activeCategory ? 'active' : ''}" data-cat="${c}">${labels[c] || c}</button>`
+        ).join('');
+
+        document.querySelectorAll('.cat-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                selectedRating = parseInt(btn.dataset.star);
-            });
-        });
-
-        document.getElementById('star-rating').addEventListener('mouseleave', () => {
-            document.querySelectorAll('.star-btn').forEach(s => {
-                s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating);
-            });
-        });
-
-        document.getElementById('rating-submit').addEventListener('click', () => {
-            if (selectedRating === 0 || !currentArticleId) return;
-            const article = data.articles.find(a => a.id === currentArticleId);
-            if (article) {
-                if (!article.ratings) article.ratings = [];
-                article.ratings.push(selectedRating);
-                saveData(data);
-                document.getElementById('rating-submit').style.display = 'none';
-                document.getElementById('rating-thanks').style.display = 'block';
-                renderArticles();
-            }
-        });
-
-        // ===== Q&A =====
-        function renderQA() {
-            const questions = (data.questions || []).filter(q => q.status === 'published' && q.answer);
-            const list = document.getElementById('qa-list');
-
-            if (!questions.length) {
-                list.innerHTML = `
-                    <div class="qa-empty">
-                        <img src="images/piyo-character.png" alt="Piyo">
-                        <p>まだ質問はありません。ぜひ最初の質問をお寄せください。</p>
-                    </div>
-                `;
-                return;
-            }
-
-            list.innerHTML = questions.map((q, i) => `
-                <div class="qa-item">
-                    <div class="qa-question" onclick="toggleQA(this)">
-                        <div class="qa-icon q">Q</div>
-                        <div class="qa-question-text">
-                            <h4>${escapeHTML(q.question)}</h4>
-                            <div class="qa-question-meta">${escapeHTML(q.name)} さん・${q.date}</div>
-                        </div>
-                        <button class="qa-toggle">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                    </div>
-                    <div class="qa-answer">
-                        <div class="qa-answer-inner">
-                            <div class="qa-icon a">A</div>
-                            <div class="qa-answer-text">
-                                <div class="piyo-label"><img src="images/piyo-character.png" alt="Piyo"> Piyo AI Lab</div>
-                                <div>${q.answer}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function toggleQA(el) {
-            const item = el.closest('.qa-item');
-            const answer = item.querySelector('.qa-answer');
-            const toggle = item.querySelector('.qa-toggle');
-            answer.classList.toggle('open');
-            toggle.classList.toggle('open');
-        }
-
-        function escapeHTML(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        // Q&A submit
-        document.getElementById('qa-submit-btn').addEventListener('click', () => {
-            const name = document.getElementById('qa-name').value.trim();
-            const question = document.getElementById('qa-question-input').value.trim();
-
-            if (!name || !question) {
-                alert('お名前と質問内容を入力してください');
-                return;
-            }
-
-            if (!data.questions) data.questions = [];
-
-            const today = new Date().toISOString().split('T')[0];
-            data.questions.push({
-                id: data.questions.length ? Math.max(...data.questions.map(q => q.id)) + 1 : 1,
-                name: name,
-                question: question,
-                answer: '',
-                date: today,
-                status: 'pending'
-            });
-
-            saveData(data);
-
-            document.getElementById('qa-name').value = '';
-            document.getElementById('qa-question-input').value = '';
-            document.getElementById('qa-success-msg').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('qa-success-msg').style.display = 'none';
-            }, 4000);
-        });
-
-        // ===== INIT =====
-        renderCategories();
-        renderArticles();
-        renderQA();
-
-        // Auto-refresh when data changes from admin page
-        window.addEventListener('storage', (e) => {
-            if (e.key === STORAGE_KEY) {
-                data = loadData();
+                activeCategory = btn.dataset.cat;
                 renderCategories();
                 renderArticles();
-                renderQA();
-            }
+            });
         });
-    </script>
+    }
+
+    // ===== RENDER ARTICLES =====
+    function renderArticles() {
+        const filtered = activeCategory === 'all'
+            ? data.articles
+            : data.articles.filter(a => a.category === activeCategory);
+
+        if (!filtered.length) {
+            document.getElementById('articles-grid').innerHTML = `
+                <div class="empty-state" style="grid-column:1/-1">
+                    <img src="images/piyo-character.png" alt="Piyo">
+                    <h3>まだ記事がありません</h3>
+                    <p>記事の公開までもうしばらくお待ちください</p>
+                </div>
+            `;
+            return;
+        }
+
+        document.getElementById('articles-grid').innerHTML = filtered.map(a => {
+            const thumbStyle = a.thumbImage
+                ? ''
+                : `background: ${a.thumb || 'linear-gradient(135deg, #a8e6cf, #dcedc1)'};`;
+            const thumbImg = a.thumbImage
+                ? `<img class="card-thumb-img" src="${a.thumbImage}" alt="">`
+                : '';
+            return `
+            <div class="article-card" data-id="${a.id}">
+                <div class="card-thumb" style="${thumbStyle}">
+                    ${thumbImg}
+                    <img class="piyo-watermark" src="images/piyo-character.png" alt="">
+                    <span class="card-category">${a.category}</span>
+                    <span class="card-level level-${a.level}">${a.levelLabel}</span>
+                </div>
+                <div class="card-body">
+                    <h3>${a.title}</h3>
+                    <p>${a.excerpt}</p>
+                    <div class="card-meta">
+                        <span>${a.date}</span>
+                        <span class="card-views">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            ${(a.views || 0).toLocaleString()}
+                        </span>
+                        <span class="card-rating">★ ${avgRating(a.ratings)}</span>
+                    </div>
+                </div>
+            </div>
+        `}).join('');
+
+        document.querySelectorAll('.article-card').forEach(card => {
+            card.addEventListener('click', () => openArticle(card.dataset.id));
+        });
+    }
+
+    // ===== OPEN ARTICLE =====
+    function openArticle(id) {
+        const article = data.articles.find(a => a.id === id);
+        if (!article) return;
+
+        currentArticleId = id;
+        selectedRating = 0;
+
+        document.getElementById('modal-header').innerHTML = `
+            <h2>${article.title}</h2>
+            <div class="modal-meta">
+                <span>${article.category}</span>
+                <span>${article.levelLabel}レベル</span>
+                <span>${article.date}</span>
+                <span>閲覧数 ${(article.views || 0).toLocaleString()}</span>
+                <span>★ ${avgRating(article.ratings)}</span>
+            </div>
+        `;
+        document.getElementById('modal-body').innerHTML = article.content;
+
+        document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('active'));
+        document.getElementById('rating-submit').style.display = '';
+        document.getElementById('rating-thanks').style.display = 'none';
+
+        document.getElementById('modal-overlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // ===== CLOSE MODAL =====
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.remove('active');
+        document.body.style.overflow = '';
+        currentArticleId = null;
+    }
+
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-overlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modal-overlay')) closeModal();
+    });
+
+    // ===== STAR RATING =====
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+            const val = parseInt(btn.dataset.star);
+            document.querySelectorAll('.star-btn').forEach(s => {
+                s.classList.toggle('active', parseInt(s.dataset.star) <= val);
+            });
+        });
+        btn.addEventListener('click', () => {
+            selectedRating = parseInt(btn.dataset.star);
+        });
+    });
+
+    document.getElementById('star-rating').addEventListener('mouseleave', () => {
+        document.querySelectorAll('.star-btn').forEach(s => {
+            s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating);
+        });
+    });
+
+    document.getElementById('rating-submit').addEventListener('click', () => {
+        if (selectedRating === 0 || !currentArticleId) return;
+        document.getElementById('rating-submit').style.display = 'none';
+        document.getElementById('rating-thanks').style.display = 'block';
+    });
+
+    // ===== Q&A（質問の一覧表示 + 投稿のみ、回答機能なし）=====
+    function renderQA() {
+        const questions = data.questions || [];
+        const list = document.getElementById('qa-list');
+
+        if (!questions.length) {
+            list.innerHTML = `
+                <div class="qa-empty">
+                    <img src="images/piyo-character.png" alt="Piyo">
+                    <p>まだ質問はありません。ぜひ最初の質問をお寄せください。</p>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = questions.map(q => `
+            <div class="qa-item">
+                <div class="qa-question">
+                    <div class="qa-icon q">Q</div>
+                    <div class="qa-question-text">
+                        <h4>${escapeHTML(q.question)}</h4>
+                        <div class="qa-question-meta">${escapeHTML(q.name)} さん・${q.date}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function escapeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ===== Q&A 送信（Notion に直接保存）=====
+    document.getElementById('qa-submit-btn').addEventListener('click', async () => {
+        const name = document.getElementById('qa-name').value.trim();
+        const question = document.getElementById('qa-question-input').value.trim();
+
+        if (!name || !question) {
+            alert('お名前と質問内容を入力してください');
+            return;
+        }
+
+        try {
+            const res = await fetch(API_BASE + '/api/questions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, question })
+            });
+
+            if (res.ok) {
+                document.getElementById('qa-name').value = '';
+                document.getElementById('qa-question-input').value = '';
+                document.getElementById('qa-success-msg').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('qa-success-msg').style.display = 'none';
+                }, 4000);
+                // 投稿後に一覧を再取得して表示を更新
+                fetchQuestions();
+            }
+        } catch (e) {
+            console.error('質問の送信に失敗:', e);
+            alert('送信に失敗しました。もう一度お試しください。');
+        }
+    });
+
+    // ===== 初期化：API からデータを取得して表示 =====
+    fetchArticles();
+    fetchQuestions();
+</script>
+
 </body>
 </html>
