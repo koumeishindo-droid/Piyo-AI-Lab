@@ -1486,10 +1486,54 @@
         });
     });
 
-    document.getElementById('rating-submit').addEventListener('click', () => {
+    document.getElementById('rating-submit').addEventListener('click', async () => {
         if (selectedRating === 0 || !currentArticleId) return;
-        document.getElementById('rating-submit').style.display = 'none';
-        document.getElementById('rating-thanks').style.display = 'block';
+
+        // 二重送信を防ぐためボタンを無効化
+        const submitBtn = document.getElementById('rating-submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '送信中...';
+
+        try {
+            const res = await fetch(API_BASE + '/api/rating', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    articleId: currentArticleId,
+                    rating: selectedRating
+                })
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                submitBtn.style.display = 'none';
+                document.getElementById('rating-thanks').style.display = 'block';
+
+                // モーダル内の平均評価をリアルタイム更新
+                const metaSpans = document.querySelectorAll('.modal-meta span');
+                metaSpans.forEach(span => {
+                    if (span.textContent.startsWith('★')) {
+                        span.textContent = '★ ' + result.average.toFixed(1);
+                    }
+                });
+
+                // 記事データも更新して一覧に反映
+                const article = data.articles.find(a => a.id === currentArticleId);
+                if (article) {
+                    article.ratings.push(selectedRating);
+                    renderArticles();
+                }
+            } else {
+                alert('評価の送信に失敗しました。もう一度お試しください。');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '評価を送信';
+            }
+        } catch (e) {
+            console.error('評価の送信に失敗:', e);
+            alert('評価の送信に失敗しました。もう一度お試しください。');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '評価を送信';
+        }
     });
 
     // ===== Q&A（質問の一覧表示 + 投稿のみ、回答機能なし）=====
