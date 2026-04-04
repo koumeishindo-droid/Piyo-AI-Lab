@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: 'Q&A管理!A2:C',  // ヘッダー行を除いた2行目以降
+     range: "'Q&A管理'!A2:C", // ヘッダー行を除いた2行目以降
     });
 
     const rows = response.data.values || [];
