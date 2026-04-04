@@ -1236,9 +1236,8 @@
     <section class="qa-section" id="qa-section">
         <div class="section-title">
             <h2>みんなのQ&A</h2>
-            <p>よくあるご質問とその回答をまとめています</p>
+            <p>AIに関する疑問をお気軽にお寄せください</p>
         </div>
-        <div class="qa-list" id="qa-list"></div>
 
         <!-- 質問フォーム -->
         <div class="qa-form-card">
@@ -1345,14 +1344,7 @@
         }
 
         async function fetchQuestions() {
-            try {
-                const res = await fetch(API_BASE + '/questions');
-                const data = await res.json();
-                questions = data.questions || [];
-                renderQA();
-            } catch (e) {
-                console.error('Q&A取得エラー:', e);
-            }
+            // 質問一覧はスプレッドシートで管理するため、サイト上では表示しない
         }
 
         // ===== RENDER CATEGORIES =====
@@ -1508,42 +1500,6 @@
             }
         });
 
-        // ===== Q&A =====
-        function renderQA() {
-            const list = document.getElementById('qa-list');
-
-            if (!questions.length) {
-                list.innerHTML = `
-                    <div class="qa-empty">
-                        <img src="images/piyo-character.png" alt="Piyo">
-                        <p>まだ質問はありません。ぜひ最初の質問をお寄せください。</p>
-                    </div>
-                `;
-                return;
-            }
-
-            list.innerHTML = questions.map((q, i) => `
-                <div class="qa-item">
-                    <div class="qa-question" onclick="toggleQA(this)">
-                        <div class="qa-icon q">Q</div>
-                        <div class="qa-question-text">
-                            <h4>${escapeHTML(q.question)}</h4>
-                            <div class="qa-question-meta">${escapeHTML(q.name)} さん・${q.date}</div>
-                        </div>
-                        <button class="qa-toggle">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function toggleQA(el) {
-            const item = el.closest('.qa-item');
-            const toggle = item.querySelector('.qa-toggle');
-            toggle.classList.toggle('open');
-        }
-
         // Q&A送信（APIに送信）
         document.getElementById('qa-submit-btn').addEventListener('click', async () => {
             const name = document.getElementById('qa-name').value.trim();
@@ -1568,8 +1524,7 @@
                     setTimeout(() => {
                         document.getElementById('qa-success-msg').style.display = 'none';
                     }, 4000);
-                    // Q&Aを再取得して表示を更新
-                    await fetchQuestions();
+                    // 送信完了（質問はスプレッドシートで確認）
                 } else {
                     alert('質問の送信に失敗しました。もう一度お試しください。');
                 }
