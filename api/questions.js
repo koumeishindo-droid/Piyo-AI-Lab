@@ -1,13 +1,3 @@
-// ============================================
-// Vercel サーバーレス関数: /api/questions
-// Google スプレッドシートの「Q&A管理」シートからデータを取得し、
-// メインWEB（index.html）に渡す中継役です。
-// 質問の受付（POST）と一覧表示（GET）に対応。
-//
-// 【Notion版からの変更点】
-// ・データソースをNotionからGoogleスプレッドシートに変更
-// ============================================
-
 const { getSheetsClient, SPREADSHEET_ID } = require('./_google');
 
 module.exports = async (req, res) => {
@@ -21,7 +11,6 @@ module.exports = async (req, res) => {
 
   const sheets = getSheetsClient();
 
-  // ===== 質問の投稿（POST）=====
   if (req.method === 'POST') {
     try {
       const { name, question } = req.body;
@@ -30,12 +19,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'お名前と質問内容は必須です' });
       }
 
-      // スプレッドシートの「Q&A管理」シートに新しい行を追加
       const today = new Date().toISOString().split('T')[0];
 
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-       range: 'QA管理!A:C'
+        range: 'QA管理!A:C',
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
@@ -50,19 +38,16 @@ module.exports = async (req, res) => {
     }
   }
 
-  // ===== 質問一覧の取得（GET）=====
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-     range: 'QA管理!A2:C' // ヘッダー行を除いた2行目以降
+      range: 'QA管理!A2:C',
     });
 
     const rows = response.data.values || [];
 
-    // スプレッドシートの列構成:
-    // A:質問内容 B:お名前 C:日付
     const questions = rows
-      .filter(row => row[0]) // 質問内容が空の行はスキップ
+      .filter(row => row[0])
       .map((row, index) => ({
         id: `q-${index + 2}`,
         question: row[0] || '',
@@ -70,7 +55,6 @@ module.exports = async (req, res) => {
         date: row[2] || '',
       }));
 
-    // 日付の降順でソート（新しい質問が先）
     questions.sort((a, b) => {
       if (!a.date) return 1;
       if (!b.date) return -1;
