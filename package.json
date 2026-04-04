@@ -1,8 +1,8 @@
 {
   "name": "piyo-ai-lab",
-  "version": "1.0.0",
-  "description": "Piyo AI Lab - Notion連携版",
+  "version": "2.0.0",
+  "description": "Piyo AI Lab - Google Docs/Sheets連携版",
   "dependencies": {
-    "@notionhq/client": "^2.2.0"
+    "googleapis": "^131.0.0"
   }
 }
