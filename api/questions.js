@@ -1,14 +1,14 @@
 // ============================================
 // Vercel サーバーレス関数: /api/questions
-// Notion の「Q&A管理」データベースからデータを取得し、
+// Google スプレッドシートの「Q&A管理」シートからデータを取得し、
 // メインWEB（index.html）に渡す中継役です。
-// ※ 回答・ステータス機能なし（質問の受付と一覧表示のみ）
+// 質問の受付（POST）と一覧表示（GET）に対応。
+//
+// 【Notion版からの変更点】
+// ・データソースをNotionからGoogleスプレッドシートに変更
 // ============================================
 
-const { Client } = require('@notionhq/client');
-
-const notion = new Client({ auth: process.env.NOTION_API_KEY });
-const QA_DB_ID = process.env.NOTION_QA_DB_ID;
+const { getSheetsClient, SPREADSHEET_ID } = require('./_google');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,6 +19,8 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
+  const sheets = getSheetsClient();
+
   // ===== 質問の投稿（POST）=====
   if (req.method === 'POST') {
     try {
@@ -28,19 +30,16 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'お名前と質問内容は必須です' });
       }
 
-      // Notion に新しい質問を追加
-      await notion.pages.create({
-        parent: { database_id: QA_DB_ID },
-        properties: {
-          質問内容: {
-            title: [{ text: { content: question } }],
-          },
-          お名前: {
-            rich_text: [{ text: { content: name } }],
-          },
-          日付: {
-            date: { start: new Date().toISOString().split('T')[0] },
-          },
+      // スプレッドシートの「Q&A管理」シートに新しい行を追加
+      const today = new Date().toISOString().split('T')[0];
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'Q&A管理!A:C',
+        valueInputOption: 'RAW',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: {
+          values: [[question, name, today]],
         },
       });
 
@@ -53,42 +52,34 @@ module.exports = async (req, res) => {
 
   // ===== 質問一覧の取得（GET）=====
   try {
-    const response = await notion.databases.query({
-      database_id: QA_DB_ID,
-      sorts: [{ property: '日付', direction: 'descending' }],
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'Q&A管理!A2:C',  // ヘッダー行を除いた2行目以降
     });
 
-    const questions = response.results.map((page) => {
-      const props = page.properties;
+    const rows = response.data.values || [];
 
-      return {
-        id: page.id,
-        name: getRichText(props['お名前']),
-        question: getTitle(props['質問内容']),
-        date: getDate(props['日付']),
-      };
+    // スプレッドシートの列構成:
+    // A:質問内容 B:お名前 C:日付
+    const questions = rows
+      .filter(row => row[0]) // 質問内容が空の行はスキップ
+      .map((row, index) => ({
+        id: `q-${index + 2}`,
+        question: row[0] || '',
+        name: row[1] || '',
+        date: row[2] || '',
+      }));
+
+    // 日付の降順でソート（新しい質問が先）
+    questions.sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return b.date.localeCompare(a.date);
     });
 
     res.status(200).json({ questions });
   } catch (error) {
-    console.error('Notion API エラー:', error);
+    console.error('Google API エラー:', error);
     res.status(500).json({ error: 'データの取得に失敗しました' });
   }
 };
-
-// ===== 便利関数 =====
-
-function getTitle(prop) {
-  if (!prop || !prop.title || !prop.title.length) return '';
-  return prop.title.map((t) => t.plain_text).join('');
-}
-
-function getRichText(prop) {
-  if (!prop || !prop.rich_text || !prop.rich_text.length) return '';
-  return prop.rich_text.map((t) => t.plain_text).join('');
-}
-
-function getDate(prop) {
-  if (!prop || !prop.date || !prop.date.start) return '';
-  return prop.date.start;
-}
