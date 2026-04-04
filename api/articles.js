@@ -1,18 +1,16 @@
 // ============================================
 // Vercel サーバーレス関数: /api/articles
-// Notion の「記事管理」データベースからデータを取得し、
+// Google スプレッドシートから記事一覧を取得し、
+// 各記事のGoogleドキュメントをHTML形式で取得して
 // メインWEB（index.html）に渡す中継役です。
 //
-// 【改修】本文をページ本文（ブロック）から取得し、
-// HTMLに自動変換するように変更しました。
-// これにより、Notionのページに普通に書くだけで
-// 画像付きの記事がWEBに反映されます。
+// 【Notion版からの変更点】
+// ・データソースをNotionからGoogleスプレッドシートに変更
+// ・記事本文をGoogleドキュメントからHTML書き出しで取得
+// ・画像はGoogleのCDN経由で配信（URLが安定して消えない）
 // ============================================
 
-const { Client } = require('@notionhq/client');
-
-const notion = new Client({ auth: process.env.NOTION_API_KEY });
-const ARTICLES_DB_ID = process.env.NOTION_ARTICLES_DB_ID;
+const { getSheetsClient, getDriveClient, SPREADSHEET_ID } = require('./_google');
 
 module.exports = async (req, res) => {
   // どのドメインからでもデータを取得できるようにする設定
@@ -25,322 +23,140 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Notion データベースから記事一覧を取得
-    const response = await notion.databases.query({
-      database_id: ARTICLES_DB_ID,
-      sorts: [{ property: '日付', direction: 'descending' }],
+    const sheets = getSheetsClient();
+
+    // ============================================
+    // スプレッドシートの「記事管理」シートからデータ取得
+    // ============================================
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: '記事管理!A2:M',  // ヘッダー行を除いた2行目以降
     });
 
-    // 各記事のページ本文（ブロック）を並行して取得
+    const rows = response.data.values || [];
+
+    // 各行を記事オブジェクトに変換
+    // スプレッドシートの列構成:
+    // A:タイトル B:執筆者 C:カテゴリ D:レベル E:日付
+    // F:概要 G:サムネイル背景 H:サムネイル画像URL
+    // I:GoogleドキュメントID J:閲覧数 K:評価データ
+    // L:平均評価 M:評価数
     const articles = await Promise.all(
-      response.results.map(async (page) => {
-        const props = page.properties;
+      rows
+        .filter(row => row[0]) // タイトルが空の行はスキップ
+        .map(async (row, index) => {
+          const docId = row[8] || '';  // GoogleドキュメントID
+          let content = '';
 
-        // ページ本文のブロックを取得してHTMLに変換
-        const content = await getPageContent(page.id);
+          // GoogleドキュメントIDがあれば本文をHTMLで取得
+          if (docId) {
+            content = await getDocContent(docId);
+          }
 
-        return {
-          id: page.id,
-          title: getTitle(props['タイトル']),
-          author: getRichText(props['執筆者']),
-          category: getMultiSelect(props['カテゴリ']),
-          level: getMultiSelect(props['レベル']),
-          levelLabel: getLevelLabel(getMultiSelect(props['レベル'])),
-          excerpt: getRichText(props['概要']),
-          content: content,
-          thumb: getRichText(props['サムネイル背景']),
-          thumbImage: getUrl(props['サムネイル画像']),
-          date: getDate(props['日付']),
-          views: getNumber(props['閲覧数']),
-          ratings: JSON.parse(getRichText(props['評価データ']) || '[]'),
-        };
-      })
+          const level = row[3] || '';
+
+          return {
+            id: `row-${index + 2}`,  // スプレッドシートの行番号（2行目始まり）
+            title: row[0] || '',
+            author: row[1] || '',
+            category: row[2] || '',
+            level: level,
+            levelLabel: getLevelLabel(level),
+            excerpt: row[5] || '',
+            content: content,
+            thumb: row[6] || '',
+            thumbImage: row[7] || '',
+            date: row[4] || '',
+            views: Number(row[9]) || 0,
+            ratings: JSON.parse(row[10] || '[]'),
+          };
+        })
     );
+
+    // 日付の降順でソート（新しい記事が先）
+    articles.sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return b.date.localeCompare(a.date);
+    });
 
     res.status(200).json({ articles });
   } catch (error) {
-    console.error('Notion API エラー:', error);
+    console.error('Google API エラー:', error);
     res.status(500).json({ error: 'データの取得に失敗しました' });
   }
 };
 
 // ============================================
-// ページ本文（ブロック）を取得してHTMLに変換
+// Googleドキュメントの本文をHTML形式で取得
+//
+// Google Drive APIの「書き出し」機能を使って、
+// ドキュメントをHTMLに変換します。
+// 画像はGoogleのCDN URLで配信されるため、
+// Notionのように1時間で消えることはありません。
 // ============================================
 
-async function getPageContent(pageId) {
+async function getDocContent(docId) {
   try {
-    const blocks = [];
-    let cursor = undefined;
+    const drive = getDriveClient();
 
-    // ブロックを全件取得（ページネーション対応）
-    do {
-      const response = await notion.blocks.children.list({
-        block_id: pageId,
-        start_cursor: cursor,
-        page_size: 100,
-      });
-      blocks.push(...response.results);
-      cursor = response.has_more ? response.next_cursor : undefined;
-    } while (cursor);
+    // ドキュメントをHTML形式で書き出し
+    const response = await drive.files.export({
+      fileId: docId,
+      mimeType: 'text/html',
+    });
 
-    // ブロックをHTMLに変換
-    return blocksToHtml(blocks);
+    const fullHtml = response.data;
+
+    // Google Docsが出力するHTMLから<body>の中身だけを抽出
+    const bodyMatch = fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    let bodyContent = bodyMatch ? bodyMatch[1] : fullHtml;
+
+    // Google Docsが付けるスタイル属性を一部クリーンアップ
+    // （サイトのデザインと競合する可能性があるため）
+    bodyContent = cleanGoogleDocsHtml(bodyContent);
+
+    return bodyContent;
   } catch (error) {
-    console.error('ブロック取得エラー:', error);
+    console.error(`ドキュメント取得エラー (ID: ${docId}):`, error.message);
     return '';
   }
 }
 
 // ============================================
-// Notion ブロックをHTMLに変換する関数
+// Google DocsのHTMLをクリーンアップ
+// 不要なラッパーやスタイルを整理して、
+// サイトのデザインに馴染むようにします。
 // ============================================
 
-function blocksToHtml(blocks) {
-  let html = '';
-  let inList = false;
-  let listType = '';
+function cleanGoogleDocsHtml(html) {
+  // Google Docsのデフォルトスタイルタグを除去
+  html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
-  for (const block of blocks) {
-    // リストの開始・終了を管理
-    const isList =
-      block.type === 'bulleted_list_item' ||
-      block.type === 'numbered_list_item';
-    const currentListType =
-      block.type === 'bulleted_list_item'
-        ? 'ul'
-        : block.type === 'numbered_list_item'
-          ? 'ol'
-          : '';
+  // 空のspanタグを除去
+  html = html.replace(/<span\s*>\s*<\/span>/gi, '');
 
-    if (inList && (!isList || currentListType !== listType)) {
-      html += `</${listType}>`;
-      inList = false;
-    }
+  // Google Docsが各段落に付ける class 属性はそのまま残す
+  // （必要に応じてCSSで制御できるように）
 
-    if (isList && !inList) {
-      listType = currentListType;
-      html += `<${listType}>`;
-      inList = true;
-    }
-
-    html += blockToHtml(block);
-  }
-
-  // 最後のリストを閉じる
-  if (inList) {
-    html += `</${listType}>`;
-  }
-
-  return html;
-}
-
-function blockToHtml(block) {
-  switch (block.type) {
-    case 'paragraph':
-      const pText = richTextToHtml(block.paragraph.rich_text);
-      if (!pText) return '<br>';
-      return `<p>${pText}</p>`;
-
-    case 'heading_1':
-      return `<h1>${richTextToHtml(block.heading_1.rich_text)}</h1>`;
-
-    case 'heading_2':
-      return `<h2>${richTextToHtml(block.heading_2.rich_text)}</h2>`;
-
-    case 'heading_3':
-      return `<h3>${richTextToHtml(block.heading_3.rich_text)}</h3>`;
-
-    case 'bulleted_list_item':
-      return `<li>${richTextToHtml(block.bulleted_list_item.rich_text)}</li>`;
-
-    case 'numbered_list_item':
-      return `<li>${richTextToHtml(block.numbered_list_item.rich_text)}</li>`;
-
-    case 'to_do':
-      const checked = block.to_do.checked ? 'checked' : '';
-      return `<p><input type="checkbox" ${checked} disabled> ${richTextToHtml(block.to_do.rich_text)}</p>`;
-
-    case 'toggle':
-      return `<details><summary>${richTextToHtml(block.toggle.rich_text)}</summary></details>`;
-
-    case 'quote':
-      return `<blockquote>${richTextToHtml(block.quote.rich_text)}</blockquote>`;
-
-    case 'callout':
-      const icon = block.callout.icon?.emoji || '';
-      return `<div class="callout"><span>${icon}</span> ${richTextToHtml(block.callout.rich_text)}</div>`;
-
-    case 'code':
-      return `<pre><code>${richTextToHtml(block.code.rich_text)}</code></pre>`;
-
-    case 'divider':
-      return '<hr>';
-
-    case 'image':
-      return imageBlockToHtml(block);
-
-    case 'video':
-      return videoBlockToHtml(block);
-
-    case 'bookmark':
-      const url = block.bookmark.url || '';
-      return `<p><a href="${url}" target="_blank">${url}</a></p>`;
-
-    case 'embed':
-      const embedUrl = block.embed.url || '';
-      return `<iframe src="${embedUrl}" width="100%" height="400" frameborder="0" allowfullscreen></iframe>`;
-
-    case 'table':
-      // テーブルは子ブロックの取得が必要なため、簡易対応
-      return '<p>[テーブル]</p>';
-
-    default:
-      return '';
-  }
-}
-
-// ============================================
-// 画像ブロックをHTMLに変換
-// Notionの画像URL（アップロード画像は一時URL）を
-// そのまま使用します。
-// ============================================
-
-function imageBlockToHtml(block) {
-  let url = '';
-  const caption = block.image.caption
-    ? richTextToHtml(block.image.caption)
-    : '';
-
-  if (block.image.type === 'file') {
-    // Notionにアップロードされた画像（一時URL、約1時間有効）
-    url = block.image.file.url;
-  } else if (block.image.type === 'external') {
-    // 外部URLの画像
-    url = block.image.external.url;
-  }
-
-  if (!url) return '';
-
-  let html = `<img src="${url}" alt="${caption || '記事の画像'}" style="max-width:100%; height:auto;">`;
-  if (caption) {
-    html = `<figure>${html}<figcaption>${caption}</figcaption></figure>`;
-  }
-  return html;
-}
-
-// ============================================
-// 動画ブロックをHTMLに変換
-// ============================================
-
-function videoBlockToHtml(block) {
-  let url = '';
-
-  if (block.video.type === 'file') {
-    url = block.video.file.url;
-  } else if (block.video.type === 'external') {
-    url = block.video.external.url;
-  }
-
-  if (!url) return '';
-
-  // YouTube の場合は埋め込みに変換
-  const youtubeMatch = url.match(
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/
+  // 画像のスタイルを調整（レスポンシブ対応）
+  html = html.replace(
+    /<img([^>]*?)style="([^"]*)"([^>]*?)>/gi,
+    '<img$1style="max-width:100%; height:auto;"$3>'
   );
-  if (youtubeMatch) {
-    return `<iframe width="100%" height="400" src="https://www.youtube.com/embed/${youtubeMatch[1]}" frameborder="0" allowfullscreen></iframe>`;
-  }
 
-  return `<video src="${url}" controls style="max-width:100%;"></video>`;
+  // style属性のないimgタグにもレスポンシブスタイルを追加
+  html = html.replace(
+    /<img(?![^>]*style=)([^>]*?)>/gi,
+    '<img style="max-width:100%; height:auto;"$1>'
+  );
+
+  return html;
 }
 
 // ============================================
-// リッチテキスト（装飾付きテキスト）をHTMLに変換
-// 太字・斜体・下線・取り消し線・リンク・コードに対応
+// レベルラベルの変換（Notion版と同じ）
 // ============================================
-
-function richTextToHtml(richTextArray) {
-  if (!richTextArray || !richTextArray.length) return '';
-
-  return richTextArray
-    .map((rt) => {
-      let text = escapeHtml(rt.plain_text);
-
-      // 改行をHTMLの改行に変換
-      text = text.replace(/\n/g, '<br>');
-
-      // 装飾を適用
-      if (rt.annotations) {
-        if (rt.annotations.bold) text = `<strong>${text}</strong>`;
-        if (rt.annotations.italic) text = `<em>${text}</em>`;
-        if (rt.annotations.underline) text = `<u>${text}</u>`;
-        if (rt.annotations.strikethrough) text = `<s>${text}</s>`;
-        if (rt.annotations.code)
-          text = `<code>${text}</code>`;
-        if (rt.annotations.color && rt.annotations.color !== 'default') {
-          text = `<span style="color:${rt.annotations.color}">${text}</span>`;
-        }
-      }
-
-      // リンク
-      if (rt.href) {
-        text = `<a href="${rt.href}" target="_blank">${text}</a>`;
-      }
-
-      return text;
-    })
-    .join('');
-}
-
-// ============================================
-// HTMLエスケープ（セキュリティ対策）
-// ============================================
-
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-// ===== Notion プロパティから値を取り出すための便利関数 =====
-
-function getTitle(prop) {
-  if (!prop || !prop.title || !prop.title.length) return '';
-  return prop.title.map((t) => t.plain_text).join('');
-}
-
-function getRichText(prop) {
-  if (!prop || !prop.rich_text || !prop.rich_text.length) return '';
-  return prop.rich_text.map((t) => t.plain_text).join('');
-}
-
-function getSelect(prop) {
-  if (!prop || !prop.select) return '';
-  return prop.select.name || '';
-}
-
-function getMultiSelect(prop) {
-  if (!prop || !prop.multi_select || !prop.multi_select.length) return '';
-  return prop.multi_select[0].name || '';
-}
-
-function getDate(prop) {
-  if (!prop || !prop.date || !prop.date.start) return '';
-  return prop.date.start;
-}
-
-function getNumber(prop) {
-  if (!prop || prop.number === null || prop.number === undefined) return 0;
-  return prop.number;
-}
-
-function getUrl(prop) {
-  if (!prop || !prop.url) return '';
-  return prop.url;
-}
 
 function getLevelLabel(level) {
   const labels = {
