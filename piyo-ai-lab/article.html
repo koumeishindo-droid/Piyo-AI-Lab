@@ -702,6 +702,13 @@
 
                 setupRating();
 
+                // 閲覧数を+1（バックグラウンドで送信、エラーでも無視）
+                fetch(API_BASE + '/views', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ articleId: article.id })
+                }).catch(() => {});
+
             } catch (e) {
                 console.error('記事取得エラー:', e);
                 document.getElementById('article-card').innerHTML = `
