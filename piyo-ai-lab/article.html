@@ -635,10 +635,9 @@
             }
 
             try {
-                const res = await fetch(API_BASE + '/articles');
+                const res = await fetch(API_BASE + '/article?id=' + encodeURIComponent(articleId));
                 const data = await res.json();
-                const articles = data.articles || [];
-                const article = articles.find(a => a.id === articleId);
+                const article = data.article;
 
                 if (!article) {
                     document.getElementById('article-card').innerHTML = `
