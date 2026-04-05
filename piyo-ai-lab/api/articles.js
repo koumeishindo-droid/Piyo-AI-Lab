@@ -3,11 +3,6 @@
 // Google スプレッドシートから記事一覧を取得し、
 // 各記事のGoogleドキュメントをHTML形式で取得して
 // メインWEB（index.html）に渡す中継役です。
-//
-// 【Notion版からの変更点】
-// ・データソースをNotionからGoogleスプレッドシートに変更
-// ・記事本文をGoogleドキュメントからHTML書き出しで取得
-// ・画像はGoogleのCDN経由で配信（URLが安定して消えない）
 // ============================================
 
 const { getSheetsClient, getDriveClient, SPREADSHEET_ID } = require('./_google');
@@ -92,8 +87,7 @@ module.exports = async (req, res) => {
 //
 // Google Drive APIの「書き出し」機能を使って、
 // ドキュメントをHTMLに変換します。
-// 画像はGoogleのCDN URLで配信されるため、
-// Notionのように1時間で消えることはありません。
+// 画像はGoogleのCDN URLで配信されます。
 // ============================================
 
 async function getDocContent(docId) {
@@ -139,23 +133,30 @@ function cleanGoogleDocsHtml(html) {
   // Google Docsが各段落に付ける class 属性はそのまま残す
   // （必要に応じてCSSで制御できるように）
 
-  // 画像のスタイルを調整（レスポンシブ対応）
+  // Google画像URLにサイズ制限を追加（幅800px以下に縮小して軽量化）
+  // 例: =w1234-h5678 → =w800 に変更、パラメータなしの場合は =w800 を追加
   html = html.replace(
-    /<img([^>]*?)style="([^"]*)"([^>]*?)>/gi,
-    '<img$1style="max-width:100%; height:auto;"$3>'
+    /(https:\/\/lh[0-9]*\.googleusercontent\.com\/[^"'\s>]+?)(?:=[^"'\s>]*)?(?=["'\s>])/gi,
+    '$1=w800'
   );
 
-  // style属性のないimgタグにもレスポンシブスタイルを追加
+  // 画像のスタイルを調整（レスポンシブ対応 + 遅延読み込み）
+  html = html.replace(
+    /<img([^>]*?)style="([^"]*)"([^>]*?)>/gi,
+    '<img$1style="max-width:100%; height:auto;"$3 loading="lazy">'
+  );
+
+  // style属性のないimgタグにもレスポンシブスタイル＋遅延読み込みを追加
   html = html.replace(
     /<img(?![^>]*style=)([^>]*?)>/gi,
-    '<img style="max-width:100%; height:auto;"$1>'
+    '<img style="max-width:100%; height:auto;"$1 loading="lazy">'
   );
 
   return html;
 }
 
 // ============================================
-// レベルラベルの変換（Notion版と同じ）
+// レベルラベルの変換
 // ============================================
 
 function getLevelLabel(level) {
