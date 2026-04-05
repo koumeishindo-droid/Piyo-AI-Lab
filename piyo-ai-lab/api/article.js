@@ -1,14 +1,12 @@
 // ============================================
-// Vercel サーバーレス関数: /api/articles
-// Google スプレッドシートから記事一覧を取得し、
-// 各記事のGoogleドキュメントをHTML形式で取得して
-// メインWEB（index.html）に渡す中継役です。
+// Vercel サーバーレス関数: /api/article
+// 指定された1記事のデータ（本文を含む）を取得する
+// 記事ページ（article.html）専用の軽量APIです。
 // ============================================
 
 const { getSheetsClient, getDriveClient, SPREADSHEET_ID } = require('./_google');
 
 module.exports = async (req, res) => {
-  // どのドメインからでもデータを取得できるようにする設定
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,54 +16,59 @@ module.exports = async (req, res) => {
   }
 
   try {
+    const articleId = req.query.id;
+
+    if (!articleId) {
+      return res.status(400).json({ error: '記事IDが必要です（例: ?id=row-2）' });
+    }
+
+    // articleId は "row-2" のような形式 → 行番号を取得
+    const rowNumber = parseInt(articleId.replace('row-', ''), 10);
+    if (isNaN(rowNumber) || rowNumber < 2) {
+      return res.status(400).json({ error: '無効な記事IDです' });
+    }
+
     const sheets = getSheetsClient();
 
-    // ============================================
-    // スプレッドシートの「記事管理」シートからデータ取得
-    // ============================================
+    // 指定行だけを取得（A列〜M列）
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: '記事管理!A2:M',  // ヘッダー行を除いた2行目以降
+      range: `記事管理!A${rowNumber}:M${rowNumber}`,
     });
 
     const rows = response.data.values || [];
+    if (!rows.length || !rows[0][0]) {
+      return res.status(404).json({ error: '記事が見つかりませんでした' });
+    }
 
-    // 各行を記事オブジェクトに変換
-    // スプレッドシートの列構成:
-    // A:タイトル B:執筆者 C:カテゴリ D:レベル E:日付
-    // F:概要 G:サムネイル背景 H:サムネイル画像URL
-    // I:GoogleドキュメントID J:閲覧数 K:評価データ
-    // L:平均評価 M:評価数
-    // 一覧では本文を取得しない（高速化のため）
-    const articles = rows
-      .filter(row => row[0]) // タイトルが空の行はスキップ
-      .map((row, index) => {
-        const level = row[3] || '';
+    const row = rows[0];
+    const docId = row[8] || '';
+    let content = '';
 
-        return {
-          id: `row-${index + 2}`,  // スプレッドシートの行番号（2行目始まり）
-          title: row[0] || '',
-          author: row[1] || '',
-          category: row[2] || '',
-          level: level,
-          levelLabel: getLevelLabel(level),
-          excerpt: row[5] || '',
-          thumb: row[6] || '',
-          thumbImage: row[7] || '',
-          date: row[4] || '',
-          views: Number(row[9]) || 0,
-          ratings: JSON.parse(row[10] || '[]'),
-        };
-      });
+    // GoogleドキュメントIDがあれば本文をHTMLで取得
+    if (docId) {
+      content = await getDocContent(docId);
+    }
 
-    // 日付の降順でソート（新しい記事が先）
-    articles.sort((a, b) => {
-      if (!a.date) return 1;
-      if (!b.date) return -1;
-      return b.date.localeCompare(a.date);
-    });
+    const level = row[3] || '';
 
-    res.status(200).json({ articles });
+    const article = {
+      id: articleId,
+      title: row[0] || '',
+      author: row[1] || '',
+      category: row[2] || '',
+      level: level,
+      levelLabel: getLevelLabel(level),
+      excerpt: row[5] || '',
+      content: content,
+      thumb: row[6] || '',
+      thumbImage: row[7] || '',
+      date: row[4] || '',
+      views: Number(row[9]) || 0,
+      ratings: JSON.parse(row[10] || '[]'),
+    };
+
+    res.status(200).json({ article });
   } catch (error) {
     console.error('Google API エラー:', error);
     res.status(500).json({ error: 'データの取得に失敗しました' });
@@ -74,17 +77,12 @@ module.exports = async (req, res) => {
 
 // ============================================
 // Googleドキュメントの本文をHTML形式で取得
-//
-// Google Drive APIの「書き出し」機能を使って、
-// ドキュメントをHTMLに変換します。
-// 画像はGoogleのCDN URLで配信されます。
 // ============================================
 
 async function getDocContent(docId) {
   try {
     const drive = getDriveClient();
 
-    // ドキュメントをHTML形式で書き出し
     const response = await drive.files.export({
       fileId: docId,
       mimeType: 'text/html',
@@ -92,12 +90,9 @@ async function getDocContent(docId) {
 
     const fullHtml = response.data;
 
-    // Google Docsが出力するHTMLから<body>の中身だけを抽出
     const bodyMatch = fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     let bodyContent = bodyMatch ? bodyMatch[1] : fullHtml;
 
-    // Google Docsが付けるスタイル属性を一部クリーンアップ
-    // （サイトのデザインと競合する可能性があるため）
     bodyContent = cleanGoogleDocsHtml(bodyContent);
 
     return bodyContent;
@@ -109,22 +104,13 @@ async function getDocContent(docId) {
 
 // ============================================
 // Google DocsのHTMLをクリーンアップ
-// 不要なラッパーやスタイルを整理して、
-// サイトのデザインに馴染むようにします。
 // ============================================
 
 function cleanGoogleDocsHtml(html) {
-  // Google Docsのデフォルトスタイルタグを除去
   html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-
-  // 空のspanタグを除去
   html = html.replace(/<span\s*>\s*<\/span>/gi, '');
 
-  // Google Docsが各段落に付ける class 属性はそのまま残す
-  // （必要に応じてCSSで制御できるように）
-
   // Google画像URLにサイズ制限を追加（幅800px以下に縮小して軽量化）
-  // 例: =w1234-h5678 → =w800 に変更、パラメータなしの場合は =w800 を追加
   html = html.replace(
     /(https:\/\/lh[0-9]*\.googleusercontent\.com\/[^"'\s>]+?)(?:=[^"'\s>]*)?(?=["'\s>])/gi,
     '$1=w800'
@@ -136,7 +122,6 @@ function cleanGoogleDocsHtml(html) {
     '<img$1style="max-width:100%; height:auto;"$3 loading="lazy">'
   );
 
-  // style属性のないimgタグにもレスポンシブスタイル＋遅延読み込みを追加
   html = html.replace(
     /<img(?![^>]*style=)([^>]*?)>/gi,
     '<img style="max-width:100%; height:auto;"$1 loading="lazy">'
