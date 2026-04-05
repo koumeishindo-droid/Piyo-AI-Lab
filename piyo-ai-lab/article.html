@@ -1,179 +1,764 @@
-<h1>AIを用いて、リサーチは"全自動"になるのか...？</h1>
-<h2>AIを用いて、情報を「集める→整理する→要約する」工程を分かりやすく解説してみた！</h2>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記事 - Piyo AI Lab</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
 
-<p>こんにちは！</p>
-<p>Piyo AI Lab です！🐣</p>
-<p>Piyo AI Labは、AI初心者向けにAIに関することについて幅広く、わかりやすく解説します！</p>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-<p>今回のお題は、、、</p>
-<p><strong>～AIを用いて、リサーチは"全自動"になるのか～</strong></p>
-<p>です！</p>
+        :root {
+            --primary: #F2C94C;
+            --primary-light: #FFF8E1;
+            --primary-dark: #D4A017;
+            --accent: #5BA89D;
+            --accent-light: #E8F5F2;
+            --accent2: #E07B8B;
+            --bg: #FBF9F5;
+            --bg-warm: #FFF8ED;
+            --bg-hero: #FFF3D6;
+            --text-dark: #3D3832;
+            --text-mid: #7A7168;
+            --text-light: #ADA49A;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            --card-shadow-hover: 0 4px 16px rgba(0,0,0,0.07);
+            --radius: 12px;
+            --radius-lg: 16px;
+        }
 
-<p>AIで調べものをするときって、意外とやることが多いですよね、、。</p>
-<p>検索して、資料を集めて、読んで、整理して、最後に要点をまとめる。</p>
-<p>AIに検索させるだけなら一瞬ですが、上記のようなフローを自分でしようとすると、多くの時間が必要になります。</p>
+        body {
+            font-family: 'Zen Maru Gothic', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-dark);
+            line-height: 1.85;
+            -webkit-font-smoothing: antialiased;
+        }
 
-<p>そこで今回紹介したいのは、</p>
-<p><strong>ClaudeとNotebookLMを用いると、リサーチが"全自動"っぽくなる...？</strong></p>
-<p>という話です。</p>
+        /* ===== HEADER ===== */
+        header {
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #EDE8DF;
+        }
 
-<p>これ、かなり未来っぽく聞こえますよね！</p>
-<p>今回はこの話について、初心者向けにかみくだきながら、</p>
-<ul>
-<li><strong>そもそもClaudeとNotebookLMってナニモノ？</strong></li>
-<li><strong>どの過程が楽になるのか？</strong></li>
-<li><strong>具体的なユースケース</strong></li>
-<li><strong>注意点</strong></li>
-<li><strong>まとめ</strong></li>
-</ul>
-<p>これらを順を追って、お話していきたいと思います！</p>
+        .header-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-<hr>
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
 
-<h2>1. そもそも NotebookLM と Claude ってナニモノ？</h2>
+        .logo-area img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
 
-<p>まず、ClaudeとNotebookLMの違い を分かりやすく解説しますね！</p>
+        .logo-text {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-dark);
+            letter-spacing: 0;
+        }
 
-<p>Claudeの最大の特徴は、「<strong>長い文脈の理解力</strong>」で、非常に長い文章や会話履歴を一度に処理できます。また、コーディング・文章作成・分析・翻訳など汎用的なタスクを幅広くこなせることも強みであるAIです。</p>
+        .logo-text span { color: var(--accent); }
 
-<p>一方で、NotebookLMの最大の特徴は「ソースグラウンディング」です。集めた記事や資料を読み込んで、その中身を整理したり、要点をまとめたりするのが得意であるAIです。</p>
+        nav { display: flex; gap: 4px; align-items: center; }
 
-<p>（＊ソースグラウンディングとは、自分がアップロードしたPDF、Webページ、YouTube動画、Googleドキュメントなどだけを情報源として回答を生成することを指します。）</p>
+        nav a {
+            text-decoration: none;
+            color: var(--text-mid);
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: all 0.15s;
+        }
 
-<p>つまり、違いを一言でまとめると、</p>
-<ul>
-<li>NotebookLMは「与えられた資料だけを根拠に答える専門家」</li>
-<li>Claudeは「幅広い知識を持つ万能アシスタント」</li>
-</ul>
-<p>というイメージです！</p>
+        nav a:hover {
+            color: var(--text-dark);
+            background: var(--bg-warm);
+        }
 
-<hr>
+        /* ===== ARTICLE WRAPPER (白いカード) ===== */
+        .article-wrapper {
+            max-width: 780px;
+            margin: 28px auto 40px;
+            padding: 0 20px;
+        }
 
-<h2>2. どの過程が楽になるのか？？</h2>
+        .article-card {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
 
-<p>皆さんは、「何かを知りたい」、「何かについて学びたい」と思ったとき、</p>
-<p>という工程を必ず行うと思います！</p>
-<p>今回紹介するAIワークフローを用いることで、効率よく、作業を進められます！</p>
+        /* ===== ARTICLE HEADER (上部カラーバー) ===== */
+        .article-top-bar {
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
 
-<hr>
+        .article-header-area {
+            padding: 36px 40px 24px;
+            border-bottom: 1px dashed #EDE8DF;
+        }
 
-<h2>3. 具体的なユースケース</h2>
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.15s;
+        }
 
-<p>次に、</p>
-<p><strong>「気になるYouTube講座2本分の内容を整理 → 自分用の学習ロードマップを作る」</strong></p>
-<p>という具体的なワークフローを3つのステップに分けて紹介したいと思います！</p>
+        .back-link:hover { color: var(--accent); }
 
-<h3>ステップ1：NotebookLMに動画を読み込ませる</h3>
+        .back-link svg { width: 14px; height: 14px; }
 
-<p>NotebookLMはYouTubeのURLを貼るだけで、動画の内容（字幕データ）を自動で取り込んでくれます！</p>
+        .article-header h1 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 700;
+            line-height: 1.65;
+            margin-bottom: 16px;
+            letter-spacing: 0;
+            color: var(--text-dark);
+        }
 
-<p>1. notebooklm.google.com にアクセスします</p>
-<p>2. 「ノートブックを新規作成」をクリックします</p>
+        .article-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 0.78rem;
+            color: var(--text-mid);
+            flex-wrap: wrap;
+            align-items: center;
+        }
 
-<img src="【画像1のURL】" alt="NotebookLM新規作成画面">
+        .meta-tag {
+            padding: 3px 11px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
+        }
 
-<p>3. ソースの追加で「ウェブサイト」を選び、気になる動画のURLを2本分貼ります</p>
+        .meta-category {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
 
-<img src="【画像2のURL】" alt="ソース追加画面">
+        .meta-level {
+            color: #fff;
+        }
 
-<img src="【画像3のURL】" alt="URL入力画面">
+        .meta-level.level-beginner { background: #81C784; }
+        .meta-level.level-intermediate { background: #FFB74D; }
+        .meta-level.level-advanced { background: #E57373; }
 
-<img src="【画像4のURL】" alt="動画読み込み完了画面">
+        .meta-separator {
+            color: #DDD8D0;
+        }
 
-<h3>ステップ2：NotebookLMで内容を整理する</h3>
+        .meta-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-<p>次に、チャット欄で質問して、2本分の内容をまとめてもらいます</p>
-<p>例えば、</p>
-<ul>
-<li>「2本の動画に共通するキーワードや概念を教えて」</li>
-<li>「それぞれの動画で学べる内容を簡潔にまとめて」</li>
-<li>「2本の動画の内容を、学ぶべき順番に並べて」</li>
-</ul>
-<p>このあたりを聞くと、バラバラだった情報が一気に整理されます。</p>
-<p>今回は、「それぞれの動画で学べる内容を簡潔にまとめて」とお願いしました！</p>
+        .meta-rating {
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
 
-<h3>ステップ3：NotebookLMの回答をClaude Coworkに渡す</h3>
+        /* ===== AUTHOR ===== */
+        .author-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: var(--bg);
+            border-bottom: 1px solid #EDE8DF;
+        }
 
-<p>次に、先ほどアウトプットとされたNotebookLMの回答をコピーし、Claude Coworkに貼り付けます。</p>
-<p>その上で、以下のようにプロンプトします。</p>
-<p>「この内容をもとに、初心者向けの学習ロードマップを作って」</p>
-<p>そうすると、以下のようなロードマップが完成します！</p>
+        .author-bar img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
 
-<img src="【画像5のURL】" alt="学習ロードマップ完成画面1">
+        .author-bar .author-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
 
-<img src="【画像6のURL】" alt="学習ロードマップ完成画面2">
+        .author-bar .author-label {
+            font-size: 0.72rem;
+            color: var(--text-light);
+        }
 
-<p>（以後、略）</p>
+        /* ===== ARTICLE BODY ===== */
+        .article-body-area {
+            padding: 32px 40px 40px;
+        }
 
-<p>今回のアウトプットでは、ロードマップを1〜6段階（難易度順）に分けており、初心者でも手の付けやすいものとなっていました！</p>
-<p>もっとアウトプットを見たいという方は、実際に手を動かしてみてはいかがでしょうか！？</p>
+        .article-body {
+            line-height: 2.1;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
 
-<p>今回のユースケースのほかにも、</p>
-<ul>
-<li>「業界・競合リサーチ」の自動化 — 副業・転職前の情報整理</li>
-<li>「買い物リサーチ」自動化 — 例えば家電比較</li>
-</ul>
-<p>などがありますので、是非お試しください！</p>
+        .article-body h1 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 36px 0 16px;
+            padding: 12px 18px;
+            background: var(--bg-warm);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
 
-<hr>
+        .article-body h2 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.12rem;
+            font-weight: 700;
+            margin: 32px 0 14px;
+            padding: 10px 16px;
+            background: var(--bg-warm);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
 
-<h2>4. 注意点</h2>
+        .article-body h3 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1.02rem;
+            font-weight: 700;
+            margin: 28px 0 12px;
+            padding: 8px 14px;
+            background: var(--bg);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
 
-<h3>①Claude Coworkの使用料金</h3>
+        .article-body p {
+            margin-bottom: 18px;
+        }
 
-<p>今回使用しているClaude Coworkは有料でのみ利用可能です。</p>
-<p>Claude は、Freeプラン（無料）でも使用可能ですが、Claude Cowork は、<strong>Proプラン以上</strong>で使用可能な機能です。</p>
+        .article-body img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--radius);
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
 
-<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">
-<thead>
-<tr style="background-color: #f0f0f0;">
-<th>プラン</th>
-<th>月額料金</th>
-<th>特徴</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Pro</td>
-<td>＄20（約3,000円）</td>
-<td>Claude の有料機能が一通り使える基本プラン。無料版より大幅に多い使用量が特徴。年額払い（$200/年）で少しお得に..！</td>
-</tr>
-<tr>
-<td>Max5x</td>
-<td>＄100（約15,000円）</td>
-<td>Proの 5倍の使用量。長文のやり取りや大量のファイル処理で制限に当たりにくい。</td>
-</tr>
-<tr>
-<td>Max20x</td>
-<td>＄200（約30,000円）</td>
-<td>Pro の 20 倍の使用量。ほぼ一日中 Claude を使い続けるヘビーユーザー向け。Max 5x と同じ特典に加え、最も余裕のある上限枠</td>
-</tr>
-</tbody>
-</table>
+        .article-body code {
+            background: var(--primary-light);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.86rem;
+        }
 
-<p>（詳しい違いを知りたい方は<a href="https://claude.com/pricing">こちら</a>から）</p>
+        .article-body pre {
+            background: #3D3832;
+            color: #E8E0D4;
+            padding: 18px;
+            border-radius: var(--radius);
+            overflow-x: auto;
+            margin: 20px 0;
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
 
-<h3>②NotebookLMは元データが重要</h3>
+        .article-body ul, .article-body ol {
+            margin: 14px 0 18px 24px;
+        }
 
-<p>NotebookLMを使った自動化で一番大事なのは、「<strong>元データの質</strong>」です！</p>
-<p>なぜなら、NotebookLMはインターネット全体から答えるAIではなく、自分がアップロードした資料だけをもとに考える仕組みです。</p>
-<p><strong>最初に入れる情報が、そのままアウトプットの質に直結</strong></p>
+        .article-body li {
+            margin-bottom: 8px;
+        }
 
-<p>例えば・・・</p>
-<ul>
-<li>古い資料と最新の資料が混ざっている</li>
-<li>個人のメモ（主観）と事実情報（客観）がごちゃまぜ
-<br>例）・この施策はうまくいくと思う（主観）
-<br>　　・〇〇の売上は昨年の5倍（客観的事実）</li>
-</ul>
-<p>このように性質の異なる情報が混ざっている状態だと、不正確な結論を出してしまうことがあります。</p>
+        .article-body a {
+            color: var(--accent);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
 
-<hr>
+        .article-body a:hover {
+            color: var(--primary-dark);
+        }
 
-<h2>5. まとめ</h2>
+        .article-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.86rem;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
 
-<p>いかがだったでしょうか！？</p>
-<p>このようなワークフローは画期的で、ワクワクしますよね！！</p>
-<p>ぴよラボではこのような紹介をたくさんしていきますので、よろしくお願いします！</p>
-<p>尚、質問やお題の提案などございましたら、HP下の質問欄からお待ちしております！</p>
-<p>次回の記事もお楽しみに！！！</p>
+        .article-body th, .article-body td {
+            border: 1px solid #EDE8DF;
+            padding: 10px 14px;
+            text-align: left;
+        }
+
+        .article-body th {
+            background: var(--bg-warm);
+            font-weight: 600;
+        }
+
+        .article-body blockquote {
+            border-left: 4px solid var(--primary);
+            background: var(--primary-light);
+            padding: 14px 20px;
+            margin: 20px 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            font-size: 0.9rem;
+            color: var(--text-mid);
+        }
+
+        .article-body hr {
+            border: none;
+            border-top: 1px dashed #DDD8D0;
+            margin: 32px 0;
+        }
+
+        /* ===== RATING ===== */
+        .rating-section {
+            background: var(--bg-warm);
+            padding: 28px 40px;
+            text-align: center;
+            border-top: 1px dashed #EDE8DF;
+        }
+
+        .rating-section h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            font-family: 'Zen Maru Gothic', sans-serif;
+        }
+
+        .rating-section > p {
+            font-size: 0.78rem;
+            color: var(--text-mid);
+            margin-bottom: 14px;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #E0D9CF;
+            transition: color 0.15s, transform 0.1s;
+        }
+
+        .star-btn:hover { transform: scale(1.15); }
+        .star-btn.active { color: var(--primary); }
+
+        .rating-submit {
+            background: var(--primary);
+            color: var(--text-dark);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 28px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+
+        .rating-submit:hover { opacity: 0.85; transform: scale(1.02); }
+
+        .rating-thanks {
+            display: none;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.92rem;
+            margin-top: 8px;
+        }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            padding: 20px 40px 28px;
+            text-align: center;
+            background: #fff;
+            border-top: 1px solid #EDE8DF;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+
+        .bottom-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--text-mid);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 24px;
+            border: 1px solid #EDE8DF;
+            transition: all 0.15s;
+        }
+
+        .bottom-nav a:hover {
+            background: var(--bg-warm);
+            color: var(--text-dark);
+            border-color: var(--primary);
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--text-mid);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #EDE8DF;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--bg-warm);
+            color: var(--text-dark);
+            padding: 36px 24px 28px;
+            text-align: center;
+            border-top: 1px dashed #D8CEBC;
+        }
+
+        .footer-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .footer-inner img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+        }
+
+        .footer-logo {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .footer-logo span { color: var(--accent); }
+
+        .footer-social {
+            margin: 18px 0 14px;
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+        }
+
+        .footer-social-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: transform 0.15s;
+        }
+
+        .footer-social-item:hover { transform: translateY(-2px); }
+
+        .footer-social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .footer-social-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: var(--text-mid);
+            color: var(--text-mid);
+        }
+
+        .footer-social-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .footer-social-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-mid);
+        }
+
+        footer p {
+            font-size: 0.74rem;
+            color: var(--text-light);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .article-wrapper { margin: 16px auto 28px; padding: 0 12px; }
+            .article-header-area { padding: 24px 20px 18px; }
+            .article-header h1 { font-size: 1.25rem; }
+            .author-bar { padding: 12px 20px; }
+            .article-body-area { padding: 24px 20px 28px; }
+            .rating-section { padding: 20px 20px; }
+            .bottom-nav { padding: 16px 20px 20px; }
+            .article-body h1,
+            .article-body h2 { font-size: 1.05rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-inner">
+            <a class="logo-area" href="index.html">
+                <img src="images/piyo-character.png" alt="Piyo">
+                <div class="logo-text">Piyo <span>AI</span> Lab</div>
+            </a>
+            <nav>
+                <a href="index.html#articles-section">よみもの</a>
+                <a href="index.html#qa-section">Q&A</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ARTICLE -->
+    <div class="article-wrapper">
+        <div class="article-card" id="article-card">
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>記事を読み込んでいます...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-inner">
+            <img src="images/piyo-character.png" alt="Piyo">
+            <div class="footer-logo">Piyo <span>AI</span> Lab</div>
+        </div>
+        <div class="footer-social">
+            <a href="https://www.instagram.com/piyoailab?igsh=MWwxMDR3YnZhb3p2YQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+                <div class="footer-social-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                </div>
+                <span class="footer-social-label">Instagram</span>
+            </a>
+            <a href="https://www.skool.com/tomolab-free" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+                <div class="footer-social-icon">
+                    <img src="images/tomo-icon.png" alt="トモラボ">
+                </div>
+                <span class="footer-social-label">トモラボ</span>
+            </a>
+            <a href="https://www.skool.com/tomolab-plus" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+                <div class="footer-social-icon">
+                    <img src="images/tomo-plus-icon.png" alt="トモラボ＋">
+                </div>
+                <span class="footer-social-label">トモラボ＋</span>
+            </a>
+        </div>
+        <p>&copy; 2026 Piyo AI Lab. AIの知識をわかりやすくお届けします</p>
+    </footer>
+
+    <script>
+        const API_BASE = '/api';
+        let currentArticleId = null;
+        let selectedRating = 0;
+
+        function avgRating(ratings) {
+            if (!ratings || !ratings.length) return '-';
+            return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+        }
+
+        async function loadArticle() {
+            const params = new URLSearchParams(window.location.search);
+            const articleId = params.get('id');
+
+            if (!articleId) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const res = await fetch(API_BASE + '/articles');
+                const data = await res.json();
+                const articles = data.articles || [];
+                const article = articles.find(a => a.id === articleId);
+
+                if (!article) {
+                    document.getElementById('article-card').innerHTML = `
+                        <div class="loading">
+                            <p>記事が見つかりませんでした</p>
+                            <a href="index.html" style="color: var(--accent); margin-top: 12px; display: inline-block;">トップページに戻る</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                currentArticleId = article.id;
+                document.title = article.title + ' - Piyo AI Lab';
+
+                document.getElementById('article-card').innerHTML = `
+                    <div class="article-top-bar"></div>
+                    <div class="article-header-area">
+                        <a class="back-link" href="index.html">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                            記事一覧にもどる
+                        </a>
+                        <div class="article-header">
+                            <h1>${article.title}</h1>
+                            <div class="article-meta">
+                                <span class="meta-tag meta-category">${article.category}</span>
+                                <span class="meta-tag meta-level level-${article.level}">${article.levelLabel}</span>
+                                <span class="meta-separator">|</span>
+                                <span class="meta-info">${article.date}</span>
+                                <span class="meta-separator">|</span>
+                                <span class="meta-info">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    ${(article.views || 0).toLocaleString()}
+                                </span>
+                                <span class="meta-rating">&#9733; ${avgRating(article.ratings)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="author-bar">
+                        <img src="images/piyo-character.png" alt="Piyo">
+                        <div>
+                            <div class="author-name">${article.author || 'ひよこレベル'}</div>
+                            <div class="author-label">Piyo AI Lab</div>
+                        </div>
+                    </div>
+                    <div class="article-body-area">
+                        <div class="article-body">${article.content || '<p>本文を読み込み中...</p>'}</div>
+                    </div>
+                    <div class="rating-section" id="rating-section">
+                        <h4>この記事はいかがでしたか？</h4>
+                        <p>よろしければ評価をお願いします</p>
+                        <div class="star-rating" id="star-rating">
+                            <button class="star-btn" data-star="1">&#9733;</button>
+                            <button class="star-btn" data-star="2">&#9733;</button>
+                            <button class="star-btn" data-star="3">&#9733;</button>
+                            <button class="star-btn" data-star="4">&#9733;</button>
+                            <button class="star-btn" data-star="5">&#9733;</button>
+                        </div>
+                        <button class="rating-submit" id="rating-submit">評価を送信</button>
+                        <div class="rating-thanks" id="rating-thanks">ご評価ありがとうございます。大変励みになります。</div>
+                    </div>
+                    <div class="bottom-nav">
+                        <a href="index.html">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                            記事一覧にもどる
+                        </a>
+                    </div>
+                `;
+
+                setupRating();
+
+            } catch (e) {
+                console.error('記事取得エラー:', e);
+                document.getElementById('article-card').innerHTML = `
+                    <div class="loading">
+                        <p>記事の読み込みに失敗しました</p>
+                        <a href="index.html" style="color: var(--accent); margin-top: 12px; display: inline-block;">トップページに戻る</a>
+                    </div>
+                `;
+            }
+        }
+
+        function setupRating() {
+            document.querySelectorAll('.star-btn').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    const val = parseInt(btn.dataset.star);
+                    document.querySelectorAll('.star-btn').forEach(s => {
+                        s.classList.toggle('active', parseInt(s.dataset.star) <= val);
+                    });
+                });
+                btn.addEventListener('click', () => {
+                    selectedRating = parseInt(btn.dataset.star);
+                });
+            });
+
+            document.getElementById('star-rating').addEventListener('mouseleave', () => {
+                document.querySelectorAll('.star-btn').forEach(s => {
+                    s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating);
+                });
+            });
+
+            document.getElementById('rating-submit').addEventListener('click', async () => {
+                if (selectedRating === 0 || !currentArticleId) return;
+                try {
+                    const res = await fetch(API_BASE + '/rating', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ articleId: currentArticleId, rating: selectedRating })
+                    });
+                    if (res.ok) {
+                        document.getElementById('rating-submit').style.display = 'none';
+                        document.getElementById('rating-thanks').style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error('評価送信エラー:', e);
+                    alert('評価の送信に失敗しました。もう一度お試しください。');
+                }
+            });
+        }
+
+        loadArticle();
+    </script>
+</body>
+</html>
