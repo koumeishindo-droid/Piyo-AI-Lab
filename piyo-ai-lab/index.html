@@ -1416,7 +1416,10 @@
             `}).join('');
 
             document.querySelectorAll('.article-card').forEach(card => {
-                card.addEventListener('click', () => openArticle(card.dataset.id));
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', () => {
+                    window.location.href = 'article.html?id=' + encodeURIComponent(card.dataset.id);
+                });
             });
         }
 
