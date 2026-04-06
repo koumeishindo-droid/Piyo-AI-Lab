@@ -11,9 +11,8 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // キャッシュ設定: Vercelが1時間（3600秒）レスポンスを保存し、
-  // 同じ記事へのアクセスではGoogleへの問い合わせをスキップする
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=60');
+  // キャッシュ無効: 常にGoogleから最新データを取得する
+  res.setHeader('Cache-Control', 's-maxage=0, stale-while-revalidate=0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
