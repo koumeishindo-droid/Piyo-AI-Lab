@@ -548,15 +548,53 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .article-wrapper { margin: 16px auto 28px; padding: 0 12px; }
-            .article-header-area { padding: 24px 20px 18px; }
-            .article-header h1 { font-size: 1.25rem; }
-            .author-bar { padding: 12px 20px; }
-            .article-body-area { padding: 24px 20px 28px; }
-            .rating-section { padding: 20px 20px; }
-            .bottom-nav { padding: 16px 20px 20px; }
+            /* --- ヘッダー --- */
+            .header-inner { padding: 8px 16px; }
+            .logo-area img { width: 32px; height: 32px; }
+            .logo-text { font-size: 1rem; }
+            nav a { font-size: 0.78rem; padding: 5px 10px; }
+
+            /* --- 記事カード全体 --- */
+            .article-wrapper { margin: 12px auto 24px; padding: 0 10px; }
+            .article-header-area { padding: 20px 16px 16px; }
+            .article-header h1 { font-size: 1.2rem; }
+            .article-meta { font-size: 0.72rem; gap: 6px; }
+            .back-link { margin-bottom: 14px; }
+
+            /* --- 著者バー --- */
+            .author-bar { padding: 10px 16px; }
+
+            /* --- 記事本文 --- */
+            .article-body-area { padding: 20px 16px 24px; }
+            .article-body { font-size: 0.9rem; }
             .article-body h1,
-            .article-body h2 { font-size: 1.05rem; }
+            .article-body h2 { font-size: 1.02rem; padding: 10px 14px; }
+            .article-body h3 { font-size: 0.95rem; padding: 8px 12px; }
+            .article-body pre { font-size: 0.78rem; padding: 14px; }
+            .article-body blockquote { padding: 12px 16px; font-size: 0.85rem; }
+
+            /* --- テーブルの横スクロール対応 --- */
+            .article-body table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                font-size: 0.8rem;
+            }
+            .article-body th, .article-body td { padding: 8px 10px; white-space: nowrap; }
+
+            /* --- 評価セクション --- */
+            .rating-section { padding: 18px 16px; }
+            .star-btn { font-size: 1.7rem; }
+
+            /* --- 下部ナビ --- */
+            .bottom-nav { padding: 14px 16px 18px; }
+            .bottom-nav a { font-size: 0.8rem; padding: 8px 18px; }
+
+            /* --- フッター --- */
+            footer { padding: 28px 16px 24px; }
+            .footer-social { gap: 20px; }
+            .footer-social-icon { width: 48px; height: 48px; }
+            .footer-social-icon svg { width: 24px; height: 24px; }
         }
     </style>
 </head>
@@ -637,6 +675,7 @@
             try {
                 const res = await fetch(API_BASE + '/article?id=' + encodeURIComponent(articleId));
                 const data = await res.json();
+                // APIの返り値が { article: {...} } でも { articles: [{...}] } でも対応
                 const article = data.article || (data.articles && data.articles[0]) || null;
 
                 if (!article) {
