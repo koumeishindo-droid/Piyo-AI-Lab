@@ -13,6 +13,10 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // 記事一覧を1時間キャッシュ（Vercel CDN）
+  // 期限切れ後も60秒間は古いデータを返しつつ裏で更新
+  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=60');
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -36,37 +40,27 @@ module.exports = async (req, res) => {
     // F:概要 G:サムネイル背景 H:サムネイル画像URL
     // I:GoogleドキュメントID J:閲覧数 K:評価データ
     // L:平均評価 M:評価数
-    const articles = await Promise.all(
-      rows
-        .filter(row => row[0]) // タイトルが空の行はスキップ
-        .map(async (row, index) => {
-          const docId = row[8] || '';  // GoogleドキュメントID
-          let content = '';
+    // 一覧では本文を取得しない（高速化のため）
+    const articles = rows
+      .filter(row => row[0]) // タイトルが空の行はスキップ
+      .map((row, index) => {
+        const level = row[3] || '';
 
-          // GoogleドキュメントIDがあれば本文をHTMLで取得
-          if (docId) {
-            content = await getDocContent(docId);
-          }
-
-          const level = row[3] || '';
-
-          return {
-            id: `row-${index + 2}`,  // スプレッドシートの行番号（2行目始まり）
-            title: row[0] || '',
-            author: row[1] || '',
-            category: row[2] || '',
-            level: level,
-            levelLabel: getLevelLabel(level),
-            excerpt: row[5] || '',
-            content: content,
-            thumb: row[6] || '',
-            thumbImage: row[7] || '',
-            date: row[4] || '',
-            views: Number(row[9]) || 0,
-            ratings: JSON.parse(row[10] || '[]'),
-          };
-        })
-    );
+        return {
+          id: `row-${index + 2}`,  // スプレッドシートの行番号（2行目始まり）
+          title: row[0] || '',
+          author: row[1] || '',
+          category: row[2] || '',
+          level: level,
+          levelLabel: getLevelLabel(level),
+          excerpt: row[5] || '',
+          thumb: row[6] || '',
+          thumbImage: row[7] || '',
+          date: row[4] || '',
+          views: Number(row[9]) || 0,
+          ratings: JSON.parse(row[10] || '[]'),
+        };
+      });
 
     // 日付の降順でソート（新しい記事が先）
     articles.sort((a, b) => {
