@@ -11,8 +11,9 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // キャッシュ無効: 常にGoogleから最新データを取得する
-  res.setHeader('Cache-Control', 's-maxage=0, stale-while-revalidate=0');
+  // 個別記事を1時間キャッシュ（Vercel CDN）
+  // 期限切れ後も60秒間は古いデータを返しつつ裏で更新
+  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=60');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
