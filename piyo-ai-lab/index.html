@@ -1108,15 +1108,65 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
+            /* --- ヘッダー --- */
+            .header-inner { padding: 8px 16px; }
+            .logo-area img { width: 32px; height: 32px; }
+            .logo-text { font-size: 1rem; }
+            nav a { font-size: 0.78rem; padding: 5px 10px; }
+
+            /* --- ヒーロー --- */
+            .hero { padding: 32px 16px 28px; }
             .hero-inner { flex-direction: column-reverse; text-align: center; gap: 16px; }
-            .hero-mascot { width: 140px; height: 140px; }
-            .hero-text h1 { font-size: 1.4rem; }
+            .hero-mascot { width: 120px; height: 120px; }
+            .hero-text h1 { font-size: 1.3rem; }
+            .hero-text .subtitle { font-size: 0.82rem; }
             .badge-row { justify-content: center; }
-            .articles-grid { grid-template-columns: 1fr; }
-            .modal-content { padding: 24px; }
+
+            /* --- フレンズ紹介 --- */
+            .friends-section { padding: 24px 16px 20px; }
+            .friends-card { padding: 24px 18px; }
+            .friends-card h2 { font-size: 1rem; }
+            .friends-char img { width: 72px; height: 72px; }
+            .friends-desc { font-size: 0.82rem; }
+
+            /* --- レベルガイド --- */
+            .level-guide { padding: 24px 16px 8px; }
+            .level-cards { flex-direction: column; align-items: center; gap: 12px; }
+            .level-card { min-width: unset; max-width: 100%; width: 100%; }
+
+            /* --- カテゴリ・記事一覧 --- */
+            .categories { padding: 24px 16px 4px; }
+            .cat-grid { gap: 6px; }
+            .cat-btn { padding: 6px 14px; font-size: 0.78rem; }
+            .articles { padding: 20px 16px 0; }
+            .articles-grid { grid-template-columns: 1fr; gap: 16px; }
+
+            /* --- セクション見出し --- */
             .section-title { text-align: center; }
             .section-title p { padding-left: 0; }
-            .rating-section { margin: 0 -24px -24px; padding: 20px 24px 24px; }
+
+            /* --- モーダル --- */
+            .modal-overlay { padding: 20px 12px; }
+            .modal-content { padding: 20px; }
+            .modal-header h2 { font-size: 1.1rem; }
+            .modal-body { font-size: 0.88rem; }
+            .modal-body h3 { font-size: 0.95rem; padding: 8px 12px; }
+            .modal-body pre { font-size: 0.78rem; padding: 12px; }
+            .rating-section { margin: 0 -20px -20px; padding: 18px 20px 22px; }
+
+            /* --- Q&Aセクション --- */
+            .qa-section { padding: 0 16px; margin-bottom: 36px; }
+            .qa-question { padding: 14px 16px; }
+            .qa-question-text h4 { font-size: 0.85rem; }
+            .qa-answer { padding: 0 16px 16px; }
+            .qa-form-card { padding: 20px 18px; }
+            .qa-form-card h3 { font-size: 0.95rem; }
+
+            /* --- フッター --- */
+            footer { padding: 28px 16px 24px; }
+            .footer-social { gap: 20px; }
+            .footer-social-icon { width: 48px; height: 48px; }
+            .footer-social-icon svg { width: 24px; height: 24px; }
         }
     </style>
 </head>
