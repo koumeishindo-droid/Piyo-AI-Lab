@@ -546,32 +546,47 @@
             right: 8px;
         }
 
+        /* バッジ行（画像の下に配置） */
+        .card-badges {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px 0;
+        }
+
         .card-category {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(61,56,50,0.7);
-            border-radius: 16px;
-            padding: 3px 12px;
-            font-size: 0.68rem;
+            background: var(--bg-warm);
+            color: var(--text-dark);
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 0.7rem;
             font-weight: 700;
-            color: white;
         }
 
         .card-level {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255,255,255,0.92);
-            border-radius: 16px;
-            padding: 3px 12px;
-            font-size: 0.66rem;
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 0.7rem;
             font-weight: 700;
         }
 
-        .level-beginner { color: #5BA89D; }
-        .level-intermediate { color: #D4A017; }
-        .level-advanced { color: #C96B6B; }
+        .card-level.level-beginner {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .card-level.level-intermediate {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .card-level.level-advanced {
+            background: #FDF2F5;
+            color: var(--accent2);
+        }
+
+        .card-level.level-beginner::before { content: '🐣 '; }
+        .card-level.level-intermediate::before { content: '🐥 '; }
+        .card-level.level-advanced::before { content: '🐔 '; }
 
         .card-body { padding: 16px 18px; }
 
@@ -1441,6 +1456,8 @@
                     <div class="card-thumb" style="${thumbStyle}">
                         ${thumbImg}
                         <img class="piyo-watermark" src="images/piyo-character.png" alt="">
+                    </div>
+                    <div class="card-badges">
                         <span class="card-category">${a.category}</span>
                         <span class="card-level level-${a.level}">${a.levelLabel}</span>
                     </div>
