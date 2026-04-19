@@ -5,60 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>記事 - Piyo AI Lab</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --primary: #F2C94C;
-            --primary-light: #FFF8E1;
-            --primary-dark: #D4A017;
-            --accent: #5BA89D;
-            --accent-light: #E8F5F2;
-            --accent2: #E07B8B;
-            --bg: #FBF9F5;
-            --bg-warm: #FFF8ED;
-            --bg-hero: #FFF3D6;
-            --text-dark: #3D3832;
-            --text-mid: #7A7168;
-            --text-light: #ADA49A;
-            --card-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            --card-shadow-hover: 0 4px 16px rgba(0,0,0,0.07);
-            --radius: 12px;
-            --radius-lg: 16px;
+            /* Corporate blue palette */
+            --text: #1d1d1f;
+            --text-sub: #4a5568;
+            --text-mute: #8b96a5;
+            --bg: #ffffff;
+            --bg-sub: #f7f9fc;
+            --bg-soft: #eef2f7;
+
+            /* Primary blues */
+            --primary: #2052c9;
+            --primary-dark: #1a42a8;
+            --primary-light: #4672e1;
+            --primary-soft: #e7eefc;
+
+            /* Orange CTA */
+            --orange: #f57c2d;
+            --orange-dark: #e06a1a;
+            --orange-soft: #fff2e8;
+
+            /* Brand accents (kept) */
+            --yellow: #F2C94C;
+            --yellow-soft: #fff8e1;
+            --teal: #5BA89D;
+            --teal-soft: #edf6f4;
+            --pink: #E07B8B;
+            --pink-soft: #fdf2f5;
+
+            --border: #e1e8ef;
+            --border-light: rgba(0,0,0,0.06);
+
+            --radius-sm: 10px;
+            --radius: 16px;
+            --radius-lg: 24px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow: 0 4px 20px rgba(0,0,0,0.06);
+            --shadow-lg: 0 24px 48px -20px rgba(32,82,201,0.18);
         }
 
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: 'Zen Maru Gothic', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text-dark);
-            line-height: 1.85;
+            font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+            background: var(--bg-sub);
+            color: var(--text);
+            line-height: 1.8;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: "palt";
         }
+
+        ::selection { background: var(--primary); color: #fff; }
 
         /* ===== HEADER ===== */
         header {
-            background: #fff;
             position: sticky;
             top: 0;
             z-index: 100;
-            border-bottom: 1px solid #EDE8DF;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
         }
 
         .header-inner {
-            max-width: 960px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 10px 24px;
+            padding: 12px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 24px;
         }
 
         .logo-area {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             text-decoration: none;
+            flex-shrink: 0;
         }
 
         .logo-area img {
@@ -68,353 +96,447 @@
             object-fit: cover;
         }
 
-        .logo-text {
-            font-family: 'Zen Maru Gothic', sans-serif;
-            font-weight: 700;
-            font-size: 1.15rem;
-            color: var(--text-dark);
-            letter-spacing: 0;
+        .logo-block {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
         }
 
-        .logo-text span { color: var(--accent); }
+        .logo-text {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 900;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: -0.005em;
+        }
 
-        nav { display: flex; gap: 4px; align-items: center; }
+        .logo-text span { color: var(--primary); }
+
+        .logo-tagline {
+            font-size: 0.66rem;
+            color: var(--text-mute);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        nav {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
 
         nav a {
             text-decoration: none;
-            color: var(--text-mid);
-            font-weight: 500;
-            font-size: 0.85rem;
-            padding: 6px 14px;
-            border-radius: 20px;
-            transition: all 0.15s;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.88rem;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
         }
 
         nav a:hover {
-            color: var(--text-dark);
-            background: var(--bg-warm);
+            color: var(--primary);
+            background: var(--primary-soft);
         }
 
-        /* ===== ARTICLE WRAPPER (白いカード) ===== */
+        .header-ctas {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-header.primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-header.primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(32,82,201,0.28);
+        }
+
+        .btn-header.orange {
+            background: var(--orange);
+            color: #fff;
+        }
+        .btn-header.orange:hover {
+            background: var(--orange-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(245,124,45,0.35);
+        }
+
+        .btn-header svg { width: 14px; height: 14px; }
+
+        /* ===== ARTICLE WRAPPER ===== */
         .article-wrapper {
-            max-width: 780px;
-            margin: 28px auto 40px;
-            padding: 0 20px;
-        }
-
-        .article-card {
-            background: #fff;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 1px 12px rgba(0,0,0,0.06);
-            overflow: hidden;
-        }
-
-        /* ===== ARTICLE HEADER (上部カラーバー) ===== */
-        .article-top-bar {
-            height: 6px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-        }
-
-        .article-header-area {
-            padding: 36px 40px 24px;
-            border-bottom: 1px dashed #EDE8DF;
+            max-width: 820px;
+            margin: 32px auto 48px;
+            padding: 0 24px;
         }
 
         .back-link {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             text-decoration: none;
-            color: var(--text-light);
-            font-size: 0.8rem;
-            font-weight: 500;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            font-weight: 600;
             margin-bottom: 20px;
-            transition: color 0.15s;
+            padding: 8px 16px;
+            border-radius: 99px;
+            background: #fff;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
         }
 
-        .back-link:hover { color: var(--accent); }
+        .back-link:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-soft);
+            transform: translateX(-2px);
+        }
 
         .back-link svg { width: 14px; height: 14px; }
 
-        .article-header h1 {
-            font-family: 'Zen Maru Gothic', sans-serif;
-            font-size: 1.55rem;
-            font-weight: 700;
-            line-height: 1.65;
-            margin-bottom: 16px;
-            letter-spacing: 0;
-            color: var(--text-dark);
+        /* ===== ARTICLE CARD ===== */
+        .article-card {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
         }
 
-        .article-meta {
+        .article-top-bar {
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--orange));
+        }
+
+        /* ===== ARTICLE HEADER ===== */
+        .article-header-area {
+            padding: 44px 48px 28px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-meta-top {
             display: flex;
-            gap: 10px;
-            font-size: 0.78rem;
-            color: var(--text-mid);
+            gap: 8px;
             flex-wrap: wrap;
-            align-items: center;
+            margin-bottom: 20px;
         }
 
         .meta-tag {
-            padding: 3px 11px;
-            border-radius: 14px;
-            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 99px;
+            font-weight: 700;
             font-size: 0.72rem;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.04em;
         }
 
         .meta-category {
-            background: var(--primary-light);
-            color: var(--primary-dark);
+            background: var(--bg-soft);
+            color: var(--text);
         }
 
-        .meta-level {
-            color: #fff;
+        .meta-level.level-beginner { background: var(--teal-soft); color: var(--teal); }
+        .meta-level.level-intermediate { background: var(--yellow-soft); color: #b88a0f; }
+        .meta-level.level-advanced { background: var(--pink-soft); color: var(--pink); }
+
+        .meta-level.level-beginner::before { content: '🐣 '; }
+        .meta-level.level-intermediate::before { content: '🐥 '; }
+        .meta-level.level-advanced::before { content: '🐔 '; }
+
+        .article-header h1 {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+            font-weight: 900;
+            line-height: 1.45;
+            margin-bottom: 20px;
+            letter-spacing: -0.01em;
+            color: var(--text);
+            text-wrap: balance;
+            word-break: keep-all;
         }
 
-        .meta-level.level-beginner { background: #81C784; }
-        .meta-level.level-intermediate { background: #FFB74D; }
-        .meta-level.level-advanced { background: #E57373; }
-
-        .meta-separator {
-            color: #DDD8D0;
+        .article-meta-bottom {
+            display: flex;
+            gap: 18px;
+            font-size: 0.82rem;
+            color: var(--text-mute);
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .meta-info {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
         }
+
+        .meta-info svg { width: 13px; height: 13px; }
 
         .meta-rating {
-            color: var(--primary-dark);
-            font-weight: 600;
-        }
-
-        /* ===== AUTHOR ===== */
-        .author-bar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 16px 40px;
-            background: var(--bg);
-            border-bottom: 1px solid #EDE8DF;
-        }
-
-        .author-bar img {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-        }
-
-        .author-bar .author-name {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .author-bar .author-label {
-            font-size: 0.72rem;
-            color: var(--text-light);
+            color: var(--primary);
+            font-weight: 800;
         }
 
         /* ===== ARTICLE BODY ===== */
         .article-body-area {
-            padding: 32px 40px 40px;
+            padding: 36px 48px 40px;
         }
 
         .article-body {
-            line-height: 2.1;
-            font-size: 0.95rem;
-            color: var(--text-dark);
+            line-height: 2;
+            font-size: 0.98rem;
+            color: var(--text);
         }
 
         .article-body h1 {
             font-family: 'Zen Maru Gothic', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin: 36px 0 16px;
-            padding: 12px 18px;
-            background: var(--bg-warm);
-            border-radius: 10px;
+            font-size: 1.35rem;
+            font-weight: 900;
+            margin: 40px 0 18px;
+            padding: 14px 20px;
+            background: var(--primary-soft);
+            border-radius: var(--radius-sm);
             border-left: 4px solid var(--primary);
+            color: var(--text);
+            letter-spacing: -0.005em;
         }
 
         .article-body h2 {
             font-family: 'Zen Maru Gothic', sans-serif;
-            font-size: 1.12rem;
-            font-weight: 700;
-            margin: 32px 0 14px;
-            padding: 10px 16px;
-            background: var(--bg-warm);
-            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            margin: 36px 0 16px;
+            padding: 12px 18px;
+            background: var(--primary-soft);
+            border-radius: var(--radius-sm);
             border-left: 4px solid var(--primary);
+            color: var(--text);
+            letter-spacing: -0.005em;
         }
 
         .article-body h3 {
             font-family: 'Zen Maru Gothic', sans-serif;
-            font-size: 1.02rem;
-            font-weight: 700;
-            margin: 28px 0 12px;
-            padding: 8px 14px;
-            background: var(--bg);
-            border-radius: 8px;
-            border-left: 3px solid var(--accent);
+            font-size: 1.08rem;
+            font-weight: 900;
+            margin: 30px 0 14px;
+            padding: 10px 16px;
+            background: var(--bg-sub);
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--primary-light);
+            color: var(--text);
         }
 
-        .article-body p {
-            margin-bottom: 18px;
-        }
+        .article-body p { margin-bottom: 18px; }
 
         .article-body img {
             max-width: 100%;
             height: auto;
             border-radius: var(--radius);
-            margin: 20px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin: 24px 0;
+            box-shadow: var(--shadow);
         }
 
         .article-body code {
-            background: var(--primary-light);
-            padding: 2px 7px;
-            border-radius: 4px;
-            font-size: 0.86rem;
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
         }
 
         .article-body pre {
-            background: #3D3832;
-            color: #E8E0D4;
-            padding: 18px;
+            background: #0f172a;
+            color: #e0e7ef;
+            padding: 20px;
             border-radius: var(--radius);
             overflow-x: auto;
-            margin: 20px 0;
-            font-size: 0.82rem;
-            line-height: 1.6;
+            margin: 22px 0;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+        }
+
+        .article-body pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
         }
 
         .article-body ul, .article-body ol {
-            margin: 14px 0 18px 24px;
+            margin: 16px 0 20px 26px;
         }
 
-        .article-body li {
-            margin-bottom: 8px;
-        }
+        .article-body li { margin-bottom: 8px; }
 
         .article-body a {
-            color: var(--accent);
-            text-decoration: underline;
-            text-underline-offset: 3px;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 1px solid var(--primary-light);
+            transition: background 0.2s, border-color 0.2s;
         }
 
         .article-body a:hover {
-            color: var(--primary-dark);
+            background: var(--primary-soft);
+            border-bottom-color: var(--primary);
         }
 
         .article-body table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 0.86rem;
-            border-radius: var(--radius);
+            margin: 22px 0;
+            font-size: 0.88rem;
+            border-radius: var(--radius-sm);
             overflow: hidden;
+            border: 1px solid var(--border);
         }
 
         .article-body th, .article-body td {
-            border: 1px solid #EDE8DF;
-            padding: 10px 14px;
+            border: 1px solid var(--border);
+            padding: 12px 16px;
             text-align: left;
         }
 
         .article-body th {
-            background: var(--bg-warm);
-            font-weight: 600;
+            background: var(--bg-sub);
+            font-weight: 700;
+            color: var(--text);
         }
 
         .article-body blockquote {
             border-left: 4px solid var(--primary);
-            background: var(--primary-light);
-            padding: 14px 20px;
-            margin: 20px 0;
+            background: var(--primary-soft);
+            padding: 16px 22px;
+            margin: 22px 0;
             border-radius: 0 var(--radius) var(--radius) 0;
-            font-size: 0.9rem;
-            color: var(--text-mid);
+            font-size: 0.94rem;
+            color: var(--text-sub);
         }
 
         .article-body hr {
             border: none;
-            border-top: 1px dashed #DDD8D0;
-            margin: 32px 0;
+            border-top: 1px solid var(--border);
+            margin: 36px 0;
         }
 
         /* ===== RATING ===== */
         .rating-section {
-            background: var(--bg-warm);
-            padding: 28px 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #fff;
+            padding: 40px 48px;
             text-align: center;
-            border-top: 1px dashed #EDE8DF;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rating-section::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+            pointer-events: none;
         }
 
         .rating-section h4 {
-            font-size: 0.95rem;
-            margin-bottom: 4px;
+            font-size: 1.08rem;
+            margin-bottom: 6px;
             font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 900;
+            color: #fff;
+            position: relative;
+            z-index: 1;
         }
 
         .rating-section > p {
-            font-size: 0.78rem;
-            color: var(--text-mid);
-            margin-bottom: 14px;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
         }
 
         .star-rating {
             display: flex;
             justify-content: center;
-            gap: 6px;
-            margin-bottom: 14px;
+            gap: 8px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
         }
 
         .star-btn {
             background: none;
             border: none;
-            font-size: 2rem;
+            font-size: 2.2rem;
             cursor: pointer;
-            color: #E0D9CF;
+            color: rgba(255,255,255,0.3);
             transition: color 0.15s, transform 0.1s;
         }
 
         .star-btn:hover { transform: scale(1.15); }
-        .star-btn.active { color: var(--primary); }
+        .star-btn.active { color: var(--yellow); }
 
         .rating-submit {
-            background: var(--primary);
-            color: var(--text-dark);
+            background: var(--orange);
+            color: #fff;
             border: none;
-            border-radius: 20px;
-            padding: 8px 28px;
+            border-radius: 99px;
+            padding: 12px 32px;
             font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
-            font-size: 0.85rem;
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+            font-size: 0.9rem;
             font-family: inherit;
+            position: relative;
+            z-index: 1;
         }
 
-        .rating-submit:hover { opacity: 0.85; transform: scale(1.02); }
+        .rating-submit:hover {
+            background: var(--orange-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(245,124,45,0.4);
+        }
 
         .rating-thanks {
             display: none;
-            color: var(--accent);
-            font-weight: 600;
-            font-size: 0.92rem;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
             margin-top: 8px;
+            position: relative;
+            z-index: 1;
         }
 
         /* ===== BOTTOM NAV ===== */
         .bottom-nav {
-            padding: 20px 40px 28px;
+            padding: 24px 48px 28px;
             text-align: center;
             background: #fff;
-            border-top: 1px solid #EDE8DF;
-            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         }
 
         .bottom-nav a {
@@ -422,50 +544,61 @@
             align-items: center;
             gap: 6px;
             text-decoration: none;
-            color: var(--text-mid);
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 10px 24px;
-            border-radius: 24px;
-            border: 1px solid #EDE8DF;
-            transition: all 0.15s;
+            color: var(--text);
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 12px 28px;
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            background: #fff;
+            transition: all 0.2s;
         }
 
         .bottom-nav a:hover {
-            background: var(--bg-warm);
-            color: var(--text-dark);
+            background: var(--primary-soft);
             border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(-2px);
         }
+
+        .bottom-nav a svg { width: 14px; height: 14px; }
 
         /* ===== LOADING ===== */
         .loading {
             text-align: center;
-            padding: 80px 24px;
-            color: var(--text-mid);
+            padding: 96px 24px;
+            color: var(--text-sub);
         }
 
         .loading-spinner {
             display: inline-block;
-            width: 32px;
-            height: 32px;
-            border: 3px solid #EDE8DF;
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--border);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
+        .loading a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+            border-bottom: 1px solid var(--primary);
+            padding-bottom: 1px;
+        }
+
         /* ===== FOOTER ===== */
         footer {
-            background: var(--bg-warm);
-            color: var(--text-dark);
-            padding: 36px 24px 28px;
+            background: var(--bg-sub);
+            padding: 72px 24px 40px;
             text-align: center;
-            border-top: 1px dashed #D8CEBC;
+            border-top: 1px solid var(--border);
         }
 
         .footer-inner {
@@ -474,26 +607,28 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin-bottom: 8px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         .footer-inner img {
-            width: 28px;
-            height: 28px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
         }
 
         .footer-logo {
             font-family: 'Zen Maru Gothic', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: var(--text);
+            letter-spacing: -0.005em;
         }
 
-        .footer-logo span { color: var(--accent); }
+        .footer-logo span { color: var(--primary); }
 
         .footer-social {
-            margin: 18px 0 14px;
+            margin: 0 0 32px;
             display: flex;
             justify-content: center;
             gap: 32px;
@@ -503,12 +638,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             text-decoration: none;
-            transition: transform 0.15s;
+            transition: transform 0.2s;
         }
 
-        .footer-social-item:hover { transform: translateY(-2px); }
+        .footer-social-item:hover { transform: translateY(-3px); }
 
         .footer-social-icon {
             display: flex;
@@ -517,17 +652,26 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: #fff;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .footer-social-item:hover .footer-social-icon {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px rgba(32,82,201,0.18);
         }
 
         .footer-social-icon svg {
-            width: 30px;
-            height: 30px;
-            fill: var(--text-mid);
-            color: var(--text-mid);
+            width: 28px;
+            height: 28px;
+            fill: var(--text-sub);
+            transition: fill 0.2s;
         }
+
+        .footer-social-item:hover .footer-social-icon svg { fill: var(--primary); }
 
         .footer-social-icon img {
             width: 100%;
@@ -536,62 +680,55 @@
         }
 
         .footer-social-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: var(--text-mid);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-sub);
         }
 
         footer p {
-            font-size: 0.74rem;
-            color: var(--text-light);
+            font-size: 0.78rem;
+            color: var(--text-mute);
         }
 
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            /* --- ヘッダー --- */
-            .header-inner { padding: 8px 16px; }
+        @media (max-width: 960px) {
+            .header-right { gap: 12px; }
+            nav { display: none; }
+        }
+
+        @media (max-width: 640px) {
+            .header-inner { padding: 10px 16px; gap: 12px; }
             .logo-area img { width: 32px; height: 32px; }
-            .logo-text { font-size: 1rem; }
-            nav a { font-size: 0.78rem; padding: 5px 10px; }
+            .logo-text { font-size: 0.98rem; }
+            .logo-tagline { font-size: 0.62rem; }
+            .btn-header { padding: 8px 14px; font-size: 0.78rem; }
+            .btn-header svg { display: none; }
 
-            /* --- 記事カード全体 --- */
-            .article-wrapper { margin: 12px auto 24px; padding: 0 10px; }
-            .article-header-area { padding: 20px 16px 16px; }
-            .article-header h1 { font-size: 1.2rem; }
-            .article-meta { font-size: 0.72rem; gap: 6px; }
-            .back-link { margin-bottom: 14px; }
-
-            /* --- 著者バー --- */
-            .author-bar { padding: 10px 16px; }
-
-            /* --- 記事本文 --- */
-            .article-body-area { padding: 20px 16px 24px; }
-            .article-body { font-size: 0.9rem; }
+            .article-wrapper { margin: 18px auto 32px; padding: 0 14px; }
+            .article-header-area { padding: 28px 22px 20px; }
+            .article-body-area { padding: 24px 22px 28px; }
+            .article-header h1 { font-size: 1.3rem; }
+            .article-body { font-size: 0.92rem; }
             .article-body h1,
-            .article-body h2 { font-size: 1.02rem; padding: 10px 14px; }
-            .article-body h3 { font-size: 0.95rem; padding: 8px 12px; }
-            .article-body pre { font-size: 0.78rem; padding: 14px; }
-            .article-body blockquote { padding: 12px 16px; font-size: 0.85rem; }
-
-            /* --- テーブルの横スクロール対応 --- */
+            .article-body h2 { font-size: 1.08rem; padding: 10px 14px; }
+            .article-body h3 { font-size: 1rem; padding: 8px 12px; }
+            .article-body pre { font-size: 0.8rem; padding: 14px; }
+            .article-body blockquote { padding: 12px 16px; font-size: 0.88rem; }
             .article-body table {
                 display: block;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
-                font-size: 0.8rem;
+                font-size: 0.82rem;
             }
-            .article-body th, .article-body td { padding: 8px 10px; white-space: nowrap; }
+            .article-body th, .article-body td { padding: 8px 12px; white-space: nowrap; }
 
-            /* --- 評価セクション --- */
-            .rating-section { padding: 18px 16px; }
-            .star-btn { font-size: 1.7rem; }
+            .rating-section { padding: 28px 22px; }
+            .star-btn { font-size: 1.9rem; }
 
-            /* --- 下部ナビ --- */
-            .bottom-nav { padding: 14px 16px 18px; }
-            .bottom-nav a { font-size: 0.8rem; padding: 8px 18px; }
+            .bottom-nav { padding: 18px 22px 22px; }
+            .bottom-nav a { font-size: 0.84rem; padding: 10px 22px; }
 
-            /* --- フッター --- */
-            footer { padding: 28px 16px 24px; }
+            footer { padding: 56px 16px 32px; }
             .footer-social { gap: 20px; }
             .footer-social-icon { width: 48px; height: 48px; }
             .footer-social-icon svg { width: 24px; height: 24px; }
@@ -605,17 +742,37 @@
         <div class="header-inner">
             <a class="logo-area" href="index.html">
                 <img src="images/piyo-character.png" alt="Piyo">
-                <div class="logo-text">Piyo <span>AI</span> Lab</div>
+                <div class="logo-block">
+                    <div class="logo-text">Piyo <span>AI</span> Lab</div>
+                    <div class="logo-tagline">AIを、もっと身近に</div>
+                </div>
             </a>
-            <nav>
-                <a href="index.html#articles-section">よみもの</a>
-                <a href="index.html#qa-section">Q&A</a>
-            </nav>
+            <div class="header-right">
+                <nav>
+                    <a href="index.html#articles-section">よみもの</a>
+                    <a href="index.html#level-section">レベル</a>
+                    <a href="index.html#qa-section">Q&amp;A</a>
+                </nav>
+                <div class="header-ctas">
+                    <a href="index.html#articles-section" class="btn-header primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        記事一覧
+                    </a>
+                    <a href="index.html#qa-section" class="btn-header orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        ピヨに質問する
+                    </a>
+                </div>
+            </div>
         </div>
     </header>
 
     <!-- ARTICLE -->
     <div class="article-wrapper">
+        <a class="back-link" href="index.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            記事一覧にもどる
+        </a>
         <div class="article-card" id="article-card">
             <div class="loading" id="loading">
                 <div class="loading-spinner"></div>
@@ -682,7 +839,7 @@
                     document.getElementById('article-card').innerHTML = `
                         <div class="loading">
                             <p>記事が見つかりませんでした</p>
-                            <a href="index.html" style="color: var(--accent); margin-top: 12px; display: inline-block;">トップページに戻る</a>
+                            <a href="index.html" style="margin-top: 12px; display: inline-block;">トップページに戻る</a>
                         </div>
                     `;
                     return;
@@ -694,20 +851,16 @@
                 document.getElementById('article-card').innerHTML = `
                     <div class="article-top-bar"></div>
                     <div class="article-header-area">
-                        <a class="back-link" href="index.html">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                            記事一覧にもどる
-                        </a>
+                        <div class="article-meta-top">
+                            <span class="meta-tag meta-category">${article.category}</span>
+                            <span class="meta-tag meta-level level-${article.level}">${article.levelLabel}</span>
+                        </div>
                         <div class="article-header">
                             <h1>${article.title}</h1>
-                            <div class="article-meta">
-                                <span class="meta-tag meta-category">${article.category}</span>
-                                <span class="meta-tag meta-level level-${article.level}">${article.levelLabel}</span>
-                                <span class="meta-separator">|</span>
+                            <div class="article-meta-bottom">
                                 <span class="meta-info">${article.date}</span>
-                                <span class="meta-separator">|</span>
                                 <span class="meta-info">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                     ${(article.views || 0).toLocaleString()}
                                 </span>
                                 <span class="meta-rating">&#9733; ${avgRating(article.ratings)}</span>
@@ -732,7 +885,7 @@
                     </div>
                     <div class="bottom-nav">
                         <a href="index.html">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                             記事一覧にもどる
                         </a>
                     </div>
@@ -752,7 +905,7 @@
                 document.getElementById('article-card').innerHTML = `
                     <div class="loading">
                         <p>記事の読み込みに失敗しました</p>
-                        <a href="index.html" style="color: var(--accent); margin-top: 12px; display: inline-block;">トップページに戻る</a>
+                        <a href="index.html" style="margin-top: 12px; display: inline-block;">トップページに戻る</a>
                     </div>
                 `;
             }
