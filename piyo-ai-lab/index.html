@@ -523,7 +523,6 @@
         }
 
         .card-thumb {
-            height: 170px;
             position: relative;
             overflow: hidden;
             display: flex;
@@ -531,11 +530,15 @@
             justify-content: center;
         }
 
+        /* 画像がない場合は16:9の比率を確保 */
+        .card-thumb:not(:has(img.card-thumb-img)) {
+            aspect-ratio: 16 / 9;
+        }
+
         .card-thumb-img {
             width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #FFF8ED;
+            height: auto;
+            display: block;
         }
 
         .card-thumb .piyo-watermark {
