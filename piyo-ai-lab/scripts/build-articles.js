@@ -90,7 +90,35 @@ function cleanGoogleDocsHtml(html) {
     if (kept.length === 0) return '<' + tag + before + after + '>';
     return '<' + tag + before + ' style="' + kept.join('; ') + '"' + after + '>';
   });
-  for (let i = 0; i < 5; i++) html = html.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+   // <span> のアンラップ：装飾系styleを持つspanは残す
+  for (let i = 0; i < 5; i++) {
+    html = html.replace(/<span([^>]*)>([\s\S]*?)<\/span>/gi, function(match, attrs, inner) {
+      const styleMatch = attrs.match(/style="([^"]*)"/i);
+      if (!styleMatch) return inner;
+      const style = styleMatch[1];
+      const keepProps = ['font-weight', 'color', 'background-color', 'text-decoration', 'font-style'];
+      const declarations = style.split(';').map(s => s.trim()).filter(Boolean);
+      const kept = declarations.filter(d => {
+        const prop = d.split(':')[0].trim().toLowerCase();
+        if (!keepProps.includes(prop)) return false;
+        if (prop === 'font-weight') {
+          const val = d.split(':')[1].trim().toLowerCase();
+          return val === 'bold' || (parseInt(val) >= 600);
+        }
+        if (prop === 'color') {
+          const val = d.split(':')[1].trim().toLowerCase().replace(/\s/g, '');
+          if (val === '#000000' || val === '#000' || val === 'black' || val === 'rgb(0,0,0)') return false;
+        }
+        if (prop === 'background-color') {
+          const val = d.split(':')[1].trim().toLowerCase().replace(/\s/g, '');
+          if (val === '#ffffff' || val === '#fff' || val === 'white' || val === 'transparent' || val === 'rgb(255,255,255)') return false;
+        }
+        return true;
+      });
+      if (kept.length === 0) return inner;
+      return '<span style="' + kept.join('; ') + '">' + inner + '</span>';
+    });
+  }
   html = html.replace(/<p[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
   html = html.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
   html = html.replace(/\n{3,}/g, '\n\n');
