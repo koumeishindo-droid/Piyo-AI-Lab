@@ -174,6 +174,11 @@ function generateArticleHtml(article) {
     ],
   };
 
+  // 表示用 数値
+  const viewsDisplay = (article.views || 0).toLocaleString();
+  const ratingDisplay = (Array.isArray(article.ratings) && article.ratings.length)
+    ? avgRating.toFixed(1) : '-';
+
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -212,62 +217,256 @@ ${JSON.stringify(articleSchema, null, 2)}
 ${JSON.stringify(breadcrumbSchema, null, 2)}
 </script>
 
-<!-- 既存のarticle.htmlへJSでクライアントサイドロード（旧来のUI互換） -->
-<script>
-  // 静的記事ページにアクセスされた際は、既存のarticle.html?id=... にJSで読み替えてUIを再現
-  // ただしクローラーは下のプリレンダリング本文を読むためSEO/AEO効果は維持される
-  (function () {
-    var id = '${article.id}';
-    // クローラー判定（簡易）：UA に bot 系ワードが含まれる場合はリダイレクトしない
-    var ua = navigator.userAgent || '';
-    var isBot = /bot|crawler|spider|crawling|googlebot|bingbot|chatgpt|gptbot|anthropic|claude|perplexity|youbot|applebot/i.test(ua);
-    if (!isBot) {
-      // 既存UIを使うため article.html にリダイレクト
-      window.location.replace('/article.html?id=' + id);
-    }
-  })();
-</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--text:#1d1d1f;--text-sub:#4a5568;--text-mute:#8b96a5;--bg:#fff;--bg-sub:#f7f9fc;--bg-soft:#eef2f7;--primary:#2052c9;--primary-dark:#1a42a8;--primary-light:#4672e1;--primary-soft:#e7eefc;--orange:#f57c2d;--orange-dark:#e06a1a;--orange-soft:#fff2e8;--yellow:#F2C94C;--yellow-soft:#fff8e1;--teal:#5BA89D;--teal-soft:#edf6f4;--pink:#E07B8B;--pink-soft:#fdf2f5;--border:#e1e8ef;--border-light:rgba(0,0,0,.06);--radius-sm:10px;--radius:16px;--radius-lg:24px;--shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow:0 4px 20px rgba(0,0,0,.06);--shadow-lg:0 24px 48px -20px rgba(32,82,201,.18)}
+html{scroll-behavior:smooth}
+body{font-family:'Inter','Noto Sans JP',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg-sub);color:var(--text);line-height:1.8;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:"palt"}
+::selection{background:var(--primary);color:#fff}
+header.site-header{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--border)}
+.header-inner{max-width:1280px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.logo-area{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.logo-area img{width:38px;height:38px;border-radius:50%;object-fit:cover}
+.logo-block{display:flex;flex-direction:column;line-height:1.1}
+.logo-text{font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:1.1rem;color:var(--text);letter-spacing:-.005em}
+.logo-text span{color:var(--primary)}
+.logo-tagline{font-size:.66rem;color:var(--text-mute);font-weight:500;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:20px}
+nav.site-nav{display:flex;gap:4px;align-items:center}
+nav.site-nav a{text-decoration:none;color:var(--text);font-weight:600;font-size:.88rem;padding:8px 14px;border-radius:8px;transition:color .2s,background .2s}
+nav.site-nav a:hover{color:var(--primary);background:var(--primary-soft)}
+.header-ctas{display:flex;gap:10px}
+.btn-header{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:99px;font-size:.85rem;font-weight:700;text-decoration:none;transition:all .2s;white-space:nowrap}
+.btn-header.primary{background:var(--primary);color:#fff}
+.btn-header.primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 8px 20px rgba(32,82,201,.28)}
+.btn-header.orange{background:var(--orange);color:#fff}
+.btn-header.orange:hover{background:var(--orange-dark);transform:translateY(-1px);box-shadow:0 8px 20px rgba(245,124,45,.35)}
+.btn-header svg{width:14px;height:14px}
+.article-wrapper{max-width:820px;margin:32px auto 48px;padding:0 24px}
+.back-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--text-sub);font-size:.85rem;font-weight:600;margin-bottom:20px;padding:8px 16px;border-radius:99px;background:#fff;border:1px solid var(--border);transition:all .2s}
+.back-link:hover{color:var(--primary);border-color:var(--primary);background:var(--primary-soft);transform:translateX(-2px)}
+.back-link svg{width:14px;height:14px}
+.article-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border-light)}
+.article-top-bar{height:4px;background:linear-gradient(90deg,var(--primary),var(--primary-light),var(--orange))}
+.article-header-area{padding:44px 48px 28px;border-bottom:1px solid var(--border)}
+.article-meta-top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.meta-tag{padding:5px 14px;border-radius:99px;font-weight:700;font-size:.72rem;letter-spacing:.04em}
+.meta-category{background:var(--bg-soft);color:var(--text)}
+.meta-level.level-beginner{background:var(--teal-soft);color:var(--teal)}
+.meta-level.level-intermediate{background:var(--yellow-soft);color:#b88a0f}
+.meta-level.level-advanced{background:var(--pink-soft);color:var(--pink)}
+.meta-level.level-beginner::before{content:'🐣 '}
+.meta-level.level-intermediate::before{content:'🐥 '}
+.meta-level.level-advanced::before{content:'🐔 '}
+.article-header h1{font-family:'Zen Maru Gothic',sans-serif;font-size:clamp(1.6rem,3.2vw,2.3rem);font-weight:900;line-height:1.45;margin-bottom:20px;letter-spacing:-.01em;color:var(--text);text-wrap:balance;word-break:keep-all}
+.article-meta-bottom{display:flex;gap:18px;font-size:.82rem;color:var(--text-mute);flex-wrap:wrap;align-items:center}
+.meta-info{display:flex;align-items:center;gap:5px}
+.meta-info svg{width:13px;height:13px}
+.meta-rating{color:var(--primary);font-weight:800}
+.article-body-area{padding:36px 48px 40px}
+.article-body{line-height:2;font-size:.98rem;color:var(--text)}
+.article-body h1{font-family:'Zen Maru Gothic',sans-serif;font-size:1.35rem;font-weight:900;margin:40px 0 18px;padding:14px 20px;background:var(--primary-soft);border-radius:var(--radius-sm);border-left:4px solid var(--primary);color:var(--text);letter-spacing:-.005em}
+.article-body h2{font-family:'Zen Maru Gothic',sans-serif;font-size:1.2rem;font-weight:900;margin:36px 0 16px;padding:12px 18px;background:var(--primary-soft);border-radius:var(--radius-sm);border-left:4px solid var(--primary);color:var(--text);letter-spacing:-.005em}
+.article-body h3{font-family:'Zen Maru Gothic',sans-serif;font-size:1.08rem;font-weight:900;margin:30px 0 14px;padding:10px 16px;background:var(--bg-sub);border-radius:var(--radius-sm);border-left:3px solid var(--primary-light);color:var(--text)}
+.article-body p{margin-bottom:18px}
+.article-body img{max-width:100%;height:auto;border-radius:var(--radius);margin:24px 0;box-shadow:var(--shadow)}
+.article-body code{background:var(--primary-soft);color:var(--primary-dark);padding:2px 8px;border-radius:6px;font-size:.88rem;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace}
+.article-body pre{background:#0f172a;color:#e0e7ef;padding:20px;border-radius:var(--radius);overflow-x:auto;margin:22px 0;font-size:.85rem;line-height:1.7;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace}
+.article-body pre code{background:transparent;color:inherit;padding:0}
+.article-body ul,.article-body ol{margin:16px 0 20px 26px}
+.article-body li{margin-bottom:8px}
+.article-body a{color:var(--primary);font-weight:600;text-decoration:none;border-bottom:1px solid var(--primary-light);transition:background .2s,border-color .2s}
+.article-body a:hover{background:var(--primary-soft);border-bottom-color:var(--primary)}
+.article-body table{width:100%;border-collapse:collapse;margin:22px 0;font-size:.88rem;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)}
+.article-body th,.article-body td{border:1px solid var(--border);padding:12px 16px;text-align:left}
+.article-body th{background:var(--bg-sub);font-weight:700;color:var(--text)}
+.article-body blockquote{border-left:4px solid var(--primary);background:var(--primary-soft);padding:16px 22px;margin:22px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:.94rem;color:var(--text-sub)}
+.article-body hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+.rating-section{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:40px 48px;text-align:center;position:relative;overflow:hidden}
+.rating-section::before{content:'';position:absolute;top:-80px;right:-80px;width:280px;height:280px;background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%);pointer-events:none}
+.rating-section h4{font-size:1.08rem;margin-bottom:6px;font-family:'Zen Maru Gothic',sans-serif;font-weight:900;color:#fff;position:relative;z-index:1}
+.rating-section>p{font-size:.88rem;color:rgba(255,255,255,.85);margin-bottom:18px;position:relative;z-index:1}
+.star-rating{display:flex;justify-content:center;gap:8px;margin-bottom:18px;position:relative;z-index:1}
+.star-btn{background:none;border:none;font-size:2.2rem;cursor:pointer;color:rgba(255,255,255,.3);transition:color .15s,transform .1s}
+.star-btn:hover{transform:scale(1.15)}
+.star-btn.active{color:var(--yellow)}
+.rating-submit{background:var(--orange);color:#fff;border:none;border-radius:99px;padding:12px 32px;font-weight:700;cursor:pointer;transition:transform .2s,background .2s,box-shadow .2s;font-size:.9rem;font-family:inherit;position:relative;z-index:1}
+.rating-submit:hover{background:var(--orange-dark);transform:translateY(-2px);box-shadow:0 10px 24px rgba(245,124,45,.4)}
+.rating-thanks{display:none;color:#fff;font-weight:700;font-size:.95rem;margin-top:8px;position:relative;z-index:1}
+.bottom-nav{padding:24px 48px 28px;text-align:center;background:#fff}
+.bottom-nav a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--text);font-size:.88rem;font-weight:700;padding:12px 28px;border-radius:99px;border:1px solid var(--border);background:#fff;transition:all .2s}
+.bottom-nav a:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary);transform:translateX(-2px)}
+.bottom-nav a svg{width:14px;height:14px}
+footer.site-footer{background:var(--bg-sub);padding:72px 24px 40px;text-align:center;border-top:1px solid var(--border)}
+.footer-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px}
+.footer-inner img{width:36px;height:36px;border-radius:50%}
+.footer-logo{font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:1.2rem;color:var(--text);letter-spacing:-.005em}
+.footer-logo span{color:var(--primary)}
+.footer-social{margin:0 0 32px;display:flex;justify-content:center;gap:32px}
+.footer-social-item{display:flex;flex-direction:column;align-items:center;gap:8px;text-decoration:none;transition:transform .2s}
+.footer-social-item:hover{transform:translateY(-3px)}
+.footer-social-icon{display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-sm);overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.footer-social-item:hover .footer-social-icon{border-color:var(--primary);box-shadow:0 8px 24px rgba(32,82,201,.18)}
+.footer-social-icon svg{width:28px;height:28px;fill:var(--text-sub);transition:fill .2s}
+.footer-social-item:hover .footer-social-icon svg{fill:var(--primary)}
+.footer-social-icon img{width:100%;height:100%;object-fit:cover}
+.footer-social-label{font-size:.72rem;font-weight:700;color:var(--text-sub)}
+footer.site-footer p{font-size:.78rem;color:var(--text-mute)}
+@media(max-width:960px){.header-right{gap:12px}nav.site-nav{display:none}}
+@media(max-width:640px){.header-inner{padding:10px 16px;gap:12px}.logo-area img{width:32px;height:32px}.logo-text{font-size:.98rem}.logo-tagline{font-size:.62rem}.btn-header{padding:8px 14px;font-size:.78rem}.btn-header svg{display:none}.article-wrapper{margin:18px auto 32px;padding:0 14px}.article-header-area{padding:28px 22px 20px}.article-body-area{padding:24px 22px 28px}.article-header h1{font-size:1.3rem}.article-body{font-size:.92rem}.article-body h1,.article-body h2{font-size:1.08rem;padding:10px 14px}.article-body h3{font-size:1rem;padding:8px 12px}.article-body pre{font-size:.8rem;padding:14px}.article-body blockquote{padding:12px 16px;font-size:.88rem}.article-body table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:.82rem}.article-body th,.article-body td{padding:8px 12px;white-space:nowrap}.rating-section{padding:28px 22px}.star-btn{font-size:1.9rem}.bottom-nav{padding:18px 22px 22px}.bottom-nav a{font-size:.84rem;padding:10px 22px}footer.site-footer{padding:56px 16px 32px}.footer-social{gap:20px}.footer-social-icon{width:48px;height:48px}.footer-social-icon svg{width:24px;height:24px}}
+</style>
 </head>
 <body>
-<!-- ===== クローラー向けプリレンダリング本文 ===== -->
-<header>
-  <nav aria-label="パンくず">
-    <a href="${SITE.url}/">ホーム</a> &gt;
-    <a href="${SITE.url}/?category=${encodeURIComponent(article.category || '')}">${escapeAttr(article.category || '記事')}</a> &gt;
-    <span>${escapeAttr(article.title)}</span>
-  </nav>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo-area" href="/">
+      <img src="/images/piyo-character.png" alt="Piyo">
+      <div class="logo-block">
+        <div class="logo-text">Piyo <span>AI</span> Lab</div>
+        <div class="logo-tagline">AIを、もっと身近に</div>
+      </div>
+    </a>
+    <div class="header-right">
+      <nav class="site-nav">
+        <a href="/#articles-section">よみもの</a>
+        <a href="/#level-section">レベル</a>
+        <a href="/#qa-section">Q&amp;A</a>
+      </nav>
+      <div class="header-ctas">
+        <a href="/#articles-section" class="btn-header primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          記事一覧
+        </a>
+        <a href="/#qa-section" class="btn-header orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          ピヨに質問する
+        </a>
+      </div>
+    </div>
+  </div>
 </header>
 
-<main>
-  <article>
-    <header>
-      <p>
-        <span>カテゴリ：${escapeAttr(article.category || '')}</span> /
-        <span>レベル：${escapeAttr(article.levelLabel || '')}</span>
-      </p>
-      <h1>${escapeAttr(article.title)}</h1>
-      <p>
-        <span>公開日：<time datetime="${datePublished}">${escapeAttr(datePublished)}</time></span>
-        ${article.author ? ` / <span>著者：${escapeAttr(article.author)}</span>` : ''}
-      </p>
-      ${article.excerpt ? `<p><strong>${escapeAttr(article.excerpt)}</strong></p>` : ''}
-    </header>
+<div class="article-wrapper">
+  <a class="back-link" href="/">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    記事一覧にもどる
+  </a>
 
-    <div>
-      ${article.content || ''}
+  <article class="article-card" data-article-id="${escapeAttr(article.id)}">
+    <div class="article-top-bar"></div>
+    <div class="article-header-area">
+      <div class="article-meta-top">
+        <span class="meta-tag meta-category">${escapeAttr(article.category || '')}</span>
+        <span class="meta-tag meta-level level-${escapeAttr(article.level || '')}">${escapeAttr(article.levelLabel || '')}</span>
+      </div>
+      <header class="article-header">
+        <h1>${escapeAttr(article.title)}</h1>
+        <div class="article-meta-bottom">
+          <span class="meta-info"><time datetime="${datePublished}">${escapeAttr(article.date || datePublished)}</time></span>
+          <span class="meta-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            ${viewsDisplay}
+          </span>
+          <span class="meta-rating">&#9733; ${ratingDisplay}</span>
+        </div>
+      </header>
     </div>
 
-    <footer>
-      <p>
-        <a href="${SITE.url}/">記事一覧にもどる</a>
-      </p>
-    </footer>
-  </article>
-</main>
+    <div class="article-body-area">
+      <div class="article-body">
+${article.content || ''}
+      </div>
+    </div>
 
-<footer>
-  <p>&copy; ${new Date().getFullYear()} ${escapeAttr(SITE.name)} - ${escapeAttr(SITE.description)}</p>
+    <div class="rating-section" id="rating-section">
+      <h4>この記事はいかがでしたか？</h4>
+      <p>よろしければ評価をお願いします</p>
+      <div class="star-rating" id="star-rating">
+        <button class="star-btn" data-star="1" aria-label="★1">&#9733;</button>
+        <button class="star-btn" data-star="2" aria-label="★2">&#9733;</button>
+        <button class="star-btn" data-star="3" aria-label="★3">&#9733;</button>
+        <button class="star-btn" data-star="4" aria-label="★4">&#9733;</button>
+        <button class="star-btn" data-star="5" aria-label="★5">&#9733;</button>
+      </div>
+      <button class="rating-submit" id="rating-submit">評価を送信</button>
+      <div class="rating-thanks" id="rating-thanks">ご評価ありがとうございます。大変励みになります。</div>
+    </div>
+
+    <div class="bottom-nav">
+      <a href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        記事一覧にもどる
+      </a>
+    </div>
+  </article>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <img src="/images/piyo-character.png" alt="Piyo">
+    <div class="footer-logo">Piyo <span>AI</span> Lab</div>
+  </div>
+  <div class="footer-social">
+    <a href="https://www.instagram.com/piyoailab?igsh=MWwxMDR3YnZhb3p2YQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+      <div class="footer-social-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      </div>
+      <span class="footer-social-label">Instagram</span>
+    </a>
+    <a href="https://www.skool.com/tomolab-free" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+      <div class="footer-social-icon"><img src="/images/tomo-icon.png" alt="トモラボ"></div>
+      <span class="footer-social-label">トモラボ</span>
+    </a>
+    <a href="https://www.skool.com/tomolab-plus" target="_blank" rel="noopener noreferrer" class="footer-social-item">
+      <div class="footer-social-icon"><img src="/images/tomo-plus-icon.png" alt="トモラボ＋"></div>
+      <span class="footer-social-label">トモラボ＋</span>
+    </a>
+  </div>
+  <p>&copy; ${new Date().getFullYear()} ${escapeAttr(SITE.name)}. AIの知識をわかりやすくお届けします</p>
 </footer>
+
+<script>
+(function(){
+  var articleId = document.querySelector('.article-card').dataset.articleId;
+  var selectedRating = 0;
+
+  // 評価UI
+  var stars = document.querySelectorAll('.star-btn');
+  var rating = document.getElementById('star-rating');
+  var submitBtn = document.getElementById('rating-submit');
+  var thanks = document.getElementById('rating-thanks');
+
+  stars.forEach(function(btn){
+    btn.addEventListener('mouseenter', function(){
+      var v = parseInt(btn.dataset.star);
+      stars.forEach(function(s){ s.classList.toggle('active', parseInt(s.dataset.star) <= v); });
+    });
+    btn.addEventListener('click', function(){
+      selectedRating = parseInt(btn.dataset.star);
+    });
+  });
+  rating.addEventListener('mouseleave', function(){
+    stars.forEach(function(s){ s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating); });
+  });
+  submitBtn.addEventListener('click', async function(){
+    if (selectedRating === 0 || !articleId) return;
+    try {
+      var res = await fetch('/api/rating', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ articleId: articleId, rating: selectedRating })
+      });
+      if (res.ok) { submitBtn.style.display='none'; thanks.style.display='block'; }
+    } catch (e) { console.error(e); alert('評価の送信に失敗しました。もう一度お試しください。'); }
+  });
+
+  // 閲覧数+1（バックグラウンド）
+  fetch('/api/views', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ articleId: articleId })
+  }).catch(function(){});
+})();
+</script>
 </body>
 </html>`;
 }
@@ -401,13 +600,21 @@ function injectArticleHtmlSeo() {
   const seoBlock = `
 <!-- ===== SEO/AEO Meta（自動生成） ===== -->
 <meta name="robots" content="noindex,follow">
-<!-- 注：このページは記事ローダー。SEO対象は /article/row-N.html 静的ページ側 -->
+<!-- 注：このページは旧URL互換のフォールバック。SEO対象は /article/row-N.html 側 -->
+<script>
+  // 旧URL（/article.html?id=row-N）でアクセスされたら、新URL（/article/row-N.html）へリダイレクト
+  (function(){
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id');
+    if (id) { window.location.replace('/article/' + encodeURIComponent(id) + '.html'); }
+  })();
+</script>
 <!-- ===== /SEO Meta ===== -->
 `;
   html = html.replace(/<!-- ===== SEO\/AEO Meta（自動生成） ===== -->[\s\S]*?<!-- ===== \/SEO Meta ===== -->\s*/g, '');
   html = html.replace(/<\/head>/i, seoBlock + '\n</head>');
   fs.writeFileSync(p, html);
-  console.log('🏷️  article.html にnoindexメタを注入');
+  console.log('🏷️  article.html にnoindex+リダイレクトを注入');
 }
 
 // ===== メイン処理 =====
