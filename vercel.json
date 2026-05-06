@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd piyo-ai-lab && npm install && npm run build && cp -r public ../public",
-  "outputDirectory": "public",
-  "installCommand": "echo 'skip root install'",
+  "buildCommand": "cd piyo-ai-lab && npm install && npm run build",
+  "outputDirectory": "piyo-ai-lab/public",
+  "installCommand": "echo skip",
   "framework": null
 }
