@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd piyo-ai-lab && npm install && npm run build",
+  "buildCommand": "npm install --prefix piyo-ai-lab && npm run build --prefix piyo-ai-lab",
   "outputDirectory": "piyo-ai-lab/public",
   "installCommand": "echo skip",
   "framework": null
