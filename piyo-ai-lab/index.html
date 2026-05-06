@@ -89,11 +89,34 @@
             flex-shrink: 0;
         }
 
+        .logo-area .piyo-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #fff8e1;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-area .piyo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 45%;
+            transform: scale(1.28);
+        }
+
         .logo-area img {
             width: 38px;
             height: 38px;
             border-radius: 50%;
             object-fit: cover;
+            object-position: center 42%;
+            transform: scale(1.18);
+            transform-origin: center 42%;
+            background: #fff;
         }
 
         .logo-block {
@@ -527,8 +550,24 @@
             height: 110px;
             border-radius: 50%;
             object-fit: cover;
+            object-position: center 45%;
             background: var(--bg-soft);
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        /* ピヨ単体は余白を切り詰めて拡大表示 */
+        .friend-card .piyo-avatar {
+            background: linear-gradient(135deg, #fff8e1 0%, #fff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .friend-card .piyo-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 45%;
+            transform: scale(1.25);
         }
 
         .friend-info h3 {
@@ -934,9 +973,33 @@
         }
 
         .qa-form h3 img {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
+            object-fit: cover;
+            object-position: center 42%;
+            background: #fff8e1;
+            transform: scale(1.0);
+        }
+
+        .qa-form h3 .piyo-icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #fff8e1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .qa-form h3 .piyo-icon-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 42%;
+            transform: scale(1.22);
+            background: transparent;
         }
 
         .qa-form > p {
@@ -1208,9 +1271,33 @@
             margin-bottom: 24px;
         }
 
+        .footer-inner .piyo-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #fff8e1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .footer-inner .piyo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 45%;
+            transform: scale(1.28);
+            background: transparent;
+        }
+
         .footer-inner img {
             width: 36px;
             height: 36px;
+            object-fit: cover;
+            object-position: center 42%;
+            transform: scale(1.18);
+            background: #fff;
             border-radius: 50%;
         }
 
@@ -1306,25 +1393,205 @@
         }
 
         @media (max-width: 640px) {
-            .hero { padding: 56px 20px 72px; }
-            .section { padding: 72px 20px; }
-            .qa-section { padding: 72px 20px; }
-            .header-inner { padding: 10px 16px; gap: 12px; }
-            .logo-area img { width: 32px; height: 32px; }
-            .logo-text { font-size: 0.98rem; }
-            .logo-tagline { font-size: 0.62rem; }
-            .btn-header { padding: 8px 14px; font-size: 0.78rem; }
-            .btn-header svg { display: none; }
-            .hero h1 { font-size: 1.75rem; }
-            .feature-list li { font-size: 0.88rem; }
-            .cta-btn { padding: 12px 22px; font-size: 0.88rem; }
-            .articles-grid { grid-template-columns: 1fr; }
-            .qa-form { padding: 28px 22px; }
-            .modal-content { padding: 32px 28px 0; }
-            .rating-section { margin: 0 -28px; padding: 22px 28px 28px; }
-            .footer-social { gap: 20px; }
-            .footer-social-icon { width: 48px; height: 48px; }
-            .friend-card { flex-direction: column; text-align: center; padding: 32px 24px; gap: 18px; }
+            /* ===== Hide on mobile ===== */
+            #friends-section { display: none; }
+
+            /* ===== Section paddings (compact) ===== */
+            .hero { padding: 44px 16px 56px; }
+            .section { padding: 56px 16px; }
+            .qa-section { padding: 56px 16px; }
+            .quicklinks { padding: 36px 0; }
+
+            /* ===== Header: icon-only CTAs ===== */
+            .header-inner { padding: 10px 14px; gap: 10px; }
+            .logo-area { gap: 8px; }
+            .logo-area .piyo-icon { width: 34px; height: 34px; }
+            .logo-text { font-size: 0.95rem; }
+            .logo-tagline { display: none; }
+            .header-right { gap: 10px; }
+            .header-ctas { gap: 8px; }
+            .btn-header {
+                padding: 0;
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                justify-content: center;
+                font-size: 0;
+                gap: 0;
+            }
+            .btn-header svg {
+                display: block;
+                width: 18px;
+                height: 18px;
+            }
+
+            /* ===== Hero ===== */
+            .hero h1 { font-size: 1.65rem; line-height: 1.3; }
+            .hero-divider { margin: 18px auto; }
+            .feature-list { margin: 0 0 22px; }
+            .feature-list li { font-size: 0.86rem; gap: 8px; }
+            .feature-list .check { width: 20px; height: 20px; }
+            .feature-list .check svg { width: 11px; height: 11px; }
+            .hero-tagline { font-size: 1rem; margin-bottom: 18px; }
+            .cta-row { flex-direction: column; gap: 10px; width: 100%; }
+            .cta-btn {
+                padding: 14px 22px;
+                font-size: 0.92rem;
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* ===== Quick links: horizontal scroll ===== */
+            .quicklinks-inner { padding: 0; }
+            .quicklinks h2 { font-size: 1.1rem; padding: 0 16px; margin-bottom: 14px; }
+            .quicklinks-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding: 4px 16px 12px;
+                gap: 8px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .quicklinks-tabs::-webkit-scrollbar { display: none; }
+            .quicklinks-tab {
+                flex-shrink: 0;
+                padding: 9px 16px;
+                font-size: 0.82rem;
+            }
+
+            /* ===== Section header ===== */
+            .section-header { margin-bottom: 36px; }
+            .section-header h2 { font-size: 1.55rem; line-height: 1.35; }
+            .section-header p { font-size: 0.9rem; line-height: 1.75; }
+
+            /* ===== Friends ===== */
+            .friend-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 28px 22px;
+                gap: 16px;
+                border-radius: var(--radius);
+            }
+            .friend-card img,
+            .friend-card .piyo-avatar {
+                width: 96px !important;
+                height: 96px !important;
+            }
+            .friend-info h3 { font-size: 1.2rem; }
+
+            /* ===== Level guide (compact horizontal layout) ===== */
+            .level-grid { gap: 12px; }
+            .level-card {
+                padding: 18px 18px 18px 16px;
+                border-radius: var(--radius);
+                text-align: left;
+                display: grid;
+                grid-template-columns: 56px 1fr;
+                column-gap: 14px;
+                align-items: start;
+            }
+            .level-card::before { height: 100%; width: 4px; right: auto; }
+            .level-card-emoji {
+                grid-row: 1 / span 3;
+                font-size: 2.4rem;
+                margin: 0;
+                align-self: center;
+                justify-self: center;
+                line-height: 1;
+            }
+            .level-card-name {
+                font-size: 1.1rem;
+                margin-bottom: 4px;
+            }
+            .level-card-desc {
+                font-size: 0.82rem;
+                line-height: 1.65;
+                margin-bottom: 10px;
+            }
+            .level-card-topics {
+                justify-content: flex-start;
+                gap: 5px;
+            }
+            .level-topic {
+                font-size: 0.68rem;
+                padding: 3px 9px;
+            }
+
+            /* ===== Articles ===== */
+            .articles-grid { grid-template-columns: 1fr; gap: 16px; }
+            .article-card { border-radius: var(--radius); }
+            .load-more-btn {
+                display: block;
+                width: 100%;
+                margin: 20px auto 0;
+                padding: 14px 20px;
+                background: #fff;
+                color: var(--primary);
+                border: 1.5px solid var(--primary);
+                border-radius: 99px;
+                font-size: 0.9rem;
+                font-weight: 700;
+                font-family: inherit;
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s;
+            }
+            .load-more-btn:active {
+                background: var(--primary);
+                color: #fff;
+            }
+            .card-thumb:not(:has(img.card-thumb-img)) { aspect-ratio: 2 / 1; }
+            .card-thumb-img {
+                aspect-ratio: 2 / 1;
+                object-fit: cover;
+            }
+            .card-badges { padding: 10px 18px 0; }
+            .card-body { padding: 14px 18px 18px; }
+            .card-body h3 { font-size: 1rem; line-height: 1.45; }
+            .card-body p { font-size: 0.82rem; -webkit-line-clamp: 2; }
+
+            /* Categories */
+            .cat-bar {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 8px;
+                margin: 0 -16px 28px;
+                padding: 0 16px 8px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .cat-bar::-webkit-scrollbar { display: none; }
+            .cat-btn { flex-shrink: 0; padding: 7px 16px; font-size: 0.8rem; }
+
+            /* ===== Q&A ===== */
+            .qa-section h2 { font-size: 1.55rem; }
+            .qa-section > .qa-inner > p { font-size: 0.9rem; margin-bottom: 28px; }
+            .qa-form {
+                padding: 24px 20px;
+                border-radius: var(--radius);
+            }
+            .qa-form h3 { font-size: 1.05rem; }
+            .qa-form > p { font-size: 0.82rem; margin-bottom: 18px; }
+            .qa-form-group input,
+            .qa-form-group textarea {
+                padding: 12px 14px;
+                font-size: 0.9rem;
+            }
+            .qa-submit-btn {
+                width: 100%;
+                padding: 14px 24px;
+                font-size: 0.9rem;
+            }
+
+            /* ===== Modal / Article ===== */
+            .modal-content { padding: 28px 22px 0; }
+            .rating-section { margin: 0 -22px; padding: 20px 22px 24px; }
+
+            /* ===== Footer ===== */
+            footer { padding: 56px 16px 32px; }
+            .footer-social { gap: 16px; flex-wrap: wrap; justify-content: center; }
+            .footer-social-icon { width: 44px; height: 44px; }
         }
     </style>
 </head>
@@ -1334,7 +1601,7 @@
     <header>
         <div class="header-inner">
             <a class="logo-area" href="index.html">
-                <img src="images/piyo-character.png" alt="Piyo">
+                <span class="piyo-icon"><img src="images/piyo-character.png" alt="Piyo"></span>
                 <div class="logo-block">
                     <div class="logo-text">Piyo <span>AI</span> Lab</div>
                     <div class="logo-tagline">AIを、もっと身近に</div>
@@ -1395,7 +1662,7 @@
             </div>
             <div class="friends-split">
                 <div class="friend-card">
-                    <img src="images/piyo-character.png" alt="ピヨ">
+                    <span class="piyo-avatar" style="width:110px;height:110px;border-radius:50%;display:inline-flex;flex-shrink:0;"><img src="images/piyo-character.png" alt="ピヨ"></span>
                     <div class="friend-info">
                         <h3>ピヨ</h3>
                         <div class="role">Beginner's Guide</div>
@@ -1477,7 +1744,7 @@
             <h2>聞いてみたいこと、<br>ありませんか？</h2>
             <p>AIに関する疑問や知りたいワークフロー、気軽に教えてください。<br>記事としてご紹介します。</p>
             <div class="qa-form">
-                <h3><img src="images/piyo-character.png" alt="Piyo"> ピヨに質問する</h3>
+                <h3><span class="piyo-icon-wrap"><img src="images/piyo-character.png" alt="Piyo"></span> ピヨに質問する</h3>
                 <p>AIに関する疑問がありましたら、お気軽にお寄せください。</p>
                 <div class="qa-form-group">
                     <label>お名前（ニックネームOK）</label>
@@ -1518,7 +1785,7 @@
     <!-- FOOTER -->
     <footer>
         <div class="footer-inner">
-            <img src="images/piyo-character.png" alt="Piyo">
+            <span class="piyo-icon"><img src="images/piyo-character.png" alt="Piyo"></span>
             <div class="footer-logo">Piyo <span>AI</span> Lab</div>
         </div>
         <div class="footer-social">
@@ -1560,17 +1827,122 @@
             return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
         }
 
-        // ===== APIからデータ取得 =====
+        // ===== ダミー記事（プレビュー専用 / APIが取得できない時のみ表示） =====
+        const DUMMY_ARTICLES = [
+            {
+                id: 'dummy-1',
+                title: 'ChatGPTって結局なに？はじめての一歩',
+                excerpt: 'AIに初めて触れる方向けに、ChatGPTで何ができるのかを優しく解説します。難しい用語は使いません。',
+                category: '入門',
+                level: 'beginner',
+                date: '2026-04-20',
+                thumbnail: '',
+                thumbnailBg: 'v1',
+                views: 1240,
+                rating: 4.8
+            },
+            {
+                id: 'dummy-2',
+                title: '画像生成AIで作る、SNS用アイキャッチ',
+                excerpt: 'プロンプトの基本を押さえれば、デザイン経験なしでも見栄えのする画像が作れます。',
+                category: '画像生成',
+                level: 'beginner',
+                date: '2026-04-18',
+                thumbnail: '',
+                thumbnailBg: 'v2',
+                views: 892,
+                rating: 4.6
+            },
+            {
+                id: 'dummy-3',
+                title: 'プロンプトを変えるだけで、回答の質が劇的に変わる',
+                excerpt: '「役割を与える」「条件を絞る」「例を示す」。中級者向けの実践テクニックを3つ紹介。',
+                category: 'プロンプト',
+                level: 'intermediate',
+                date: '2026-04-15',
+                thumbnail: '',
+                thumbnailBg: 'v3',
+                views: 2156,
+                rating: 4.9
+            },
+            {
+                id: 'dummy-4',
+                title: 'GAS × ChatGPTで自動メール返信',
+                excerpt: 'Google Apps Scriptと組み合わせて、定型メールへの返信を自動化するワークフロー実例。',
+                category: 'ワークフロー',
+                level: 'advanced',
+                date: '2026-04-12',
+                thumbnail: '',
+                thumbnailBg: 'v4',
+                views: 678,
+                rating: 4.7
+            },
+            {
+                id: 'dummy-5',
+                title: 'Notionに書いたメモをAIに整理してもらう',
+                excerpt: '散らかったメモも、AIに任せれば構造化された議事録に。日々の作業がぐっと楽になります。',
+                category: '実践',
+                level: 'intermediate',
+                date: '2026-04-08',
+                thumbnail: '',
+                thumbnailBg: 'v1',
+                views: 1543,
+                rating: 4.5
+            },
+            {
+                id: 'dummy-6',
+                title: 'AI時代に身につけたい、たった一つの考え方',
+                excerpt: 'ツールは変わってもこれだけは変わらない、AIと長く付き合うための姿勢について。',
+                category: '入門',
+                level: 'beginner',
+                date: '2026-04-05',
+                thumbnail: '',
+                thumbnailBg: 'v2',
+                views: 3421,
+                rating: 4.9
+            }
+        ];
+
+        // ===== データ取得（静的JSON優先 → APIフォールバック → ダミー） =====
         async function fetchArticles() {
+            // ① localStorageから前回データを即時表示（体感速度UP）
+            try {
+                const cached = localStorage.getItem('piyo_articles_cache');
+                if (cached) {
+                    const data = JSON.parse(cached);
+                    if (data.articles && data.articles.length) {
+                        articles = data.articles;
+                        renderCategories();
+                        renderArticles();
+                    }
+                }
+            } catch (e) {}
+
+            // ② 静的JSON（ビルド時生成）を取りに行く
+            try {
+                const res = await fetch('/articles.json', { cache: 'no-cache' });
+                if (!res.ok) throw new Error('static json not available');
+                const data = await res.json();
+                articles = data.articles || [];
+                try { localStorage.setItem('piyo_articles_cache', JSON.stringify(data)); } catch (e) {}
+                renderCategories();
+                renderArticles();
+                return;
+            } catch (e) {
+                console.warn('静的JSONが無いためAPIにフォールバック:', e.message);
+            }
+
+            // ③ 旧API（フォールバック）
             try {
                 const res = await fetch(API_BASE + '/articles');
+                if (!res.ok) throw new Error('API not available');
                 const data = await res.json();
                 articles = data.articles || [];
                 renderCategories();
                 renderArticles();
             } catch (e) {
-                console.error('記事取得エラー:', e);
-                articles = [];
+                console.warn('APIに接続できないためダミー記事を表示します:', e.message);
+                articles = DUMMY_ARTICLES;
                 renderCategories();
                 renderArticles();
             }
@@ -1593,6 +1965,7 @@
             document.querySelectorAll('.cat-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     activeCategory = btn.dataset.cat;
+                    mobileVisibleCount = MOBILE_INITIAL;
                     renderCategories();
                     renderArticles();
                 });
@@ -1632,6 +2005,15 @@
         }
 
         // ===== RENDER ARTICLES =====
+        // スマホ版で初期表示する件数 / もっと見るで増やす件数
+        const MOBILE_INITIAL = 3;
+        const MOBILE_INCREMENT = 3;
+        let mobileVisibleCount = MOBILE_INITIAL;
+
+        function isMobileView() {
+            return window.matchMedia('(max-width: 640px)').matches;
+        }
+
         function renderArticles() {
             const container = document.getElementById('articles-container');
             const filtered = activeCategory === 'all'
@@ -1649,16 +2031,35 @@
                 return;
             }
 
+            const mobile = isMobileView();
+            const visible = mobile ? filtered.slice(0, mobileVisibleCount) : filtered;
+            const remaining = filtered.length - visible.length;
+
             const gradientVariants = ['v1', 'v2', 'v3', 'v4'];
             let html = '<div class="articles-grid">';
-            filtered.forEach((a, i) => {
+            visible.forEach((a, i) => {
                 html += cardHTML(a, { v: a.thumbImage ? '' : gradientVariants[i % 4] });
             });
             html += '</div>';
 
+            if (mobile && remaining > 0) {
+                html += `<button class="load-more-btn" id="load-more-btn">もっと見る (+${Math.min(remaining, MOBILE_INCREMENT)})</button>`;
+            }
+
             container.innerHTML = html;
             bindCards();
+
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', () => {
+                    mobileVisibleCount += MOBILE_INCREMENT;
+                    renderArticles();
+                });
+            }
         }
+
+        // カテゴリ切り替え時に件数リセット
+        window.addEventListener('resize', () => { mobileVisibleCount = MOBILE_INITIAL; });
 
         function bindCards() {
             document.querySelectorAll('.article-card').forEach(card => {
