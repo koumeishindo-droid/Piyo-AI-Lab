@@ -641,8 +641,12 @@
             <div id="page-dashboard">
                 <div class="page-header">
                     <h1>ダッシュボード</h1>
-                    <button class="btn btn-primary" id="btn-new-article">＋ 新規投稿</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn" id="btn-rebuild" title="記事の最新版を本番サイトに反映します（1〜2分）">🔄 サイトを再ビルド</button>
+                        <button class="btn btn-primary" id="btn-new-article">＋ 新規投稿</button>
+                    </div>
                 </div>
+                <div id="rebuild-status" style="display:none; margin-bottom:16px; padding:12px 16px; border-radius:8px; font-size:0.9rem;"></div>
 
                 <div class="stats-row" id="admin-stats"></div>
 
@@ -1199,6 +1203,38 @@
 
         // ===== EVENTS =====
         document.getElementById('btn-new-article').addEventListener('click', () => openEditor());
+
+        // 再ビルドボタン
+        document.getElementById('btn-rebuild').addEventListener('click', async () => {
+            const hookUrl = localStorage.getItem('piyo_deploy_hook');
+            if (!hookUrl) {
+                const url = prompt('Vercel Deploy Hook の URL を入力してください\n（Vercelダッシュボード → Settings → Git → Deploy Hooks で作成）\n※ 一度だけ。次回からは自動で使われます。');
+                if (!url) return;
+                localStorage.setItem('piyo_deploy_hook', url);
+            }
+            const url = localStorage.getItem('piyo_deploy_hook');
+            const status = document.getElementById('rebuild-status');
+            const btn = document.getElementById('btn-rebuild');
+            btn.disabled = true;
+            status.style.display = 'block';
+            status.style.background = '#fef3c7';
+            status.style.color = '#92400e';
+            status.textContent = '🔄 再ビルドをVercelに依頼中...';
+            try {
+                const res = await fetch(url, { method: 'POST' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                status.style.background = '#d1fae5';
+                status.style.color = '#065f46';
+                status.innerHTML = '✅ 再ビルドを開始しました。1〜2分後に <a href="https://piyoai.b-steep.com/" target="_blank">本番サイト</a> に反映されます。';
+            } catch (e) {
+                status.style.background = '#fee2e2';
+                status.style.color = '#991b1b';
+                status.textContent = '❌ エラー: ' + e.message + '（Hook URLを確認してください）';
+                localStorage.removeItem('piyo_deploy_hook');
+            } finally {
+                btn.disabled = false;
+            }
+        });
         document.getElementById('btn-save').addEventListener('click', saveArticle);
         document.getElementById('btn-cancel').addEventListener('click', closeEditor);
 
