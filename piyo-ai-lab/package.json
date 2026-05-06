@@ -1,0 +1,12 @@
+{
+  "name": "piyo-ai-lab",
+  "version": "2.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-articles.js"
+  },
+  "dependencies": {
+    "google-auth-library": "^9.14.2",
+    "googleapis": "^144.0.0"
+  }
+}
