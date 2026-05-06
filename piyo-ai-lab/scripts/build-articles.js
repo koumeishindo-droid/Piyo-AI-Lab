@@ -66,7 +66,30 @@ function cleanGoogleDocsHtml(html) {
     const alt = (attrs.match(/alt="([^"]*)"/i) || [])[1] || '';
     return '<img src="' + src + '" alt="' + alt + '" loading="lazy" style="max-width:100%;height:auto;">';
   });
-  html = html.replace(/<(?!img)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
+   // style属性から装飾系プロパティだけを残す（太字・色・背景・下線・斜体）
+  html = html.replace(/<(?!img)([a-z][a-z0-9]*)([^>]*?)\sstyle="([^"]*)"([^>]*)>/gi, function(match, tag, before, style, after) {
+    const keepProps = ['font-weight', 'color', 'background-color', 'text-decoration', 'font-style'];
+    const declarations = style.split(';').map(s => s.trim()).filter(Boolean);
+    const kept = declarations.filter(d => {
+      const prop = d.split(':')[0].trim().toLowerCase();
+      if (!keepProps.includes(prop)) return false;
+      if (prop === 'font-weight') {
+        const val = d.split(':')[1].trim().toLowerCase();
+        return val === 'bold' || val === '700' || val === '800' || val === '900' || (parseInt(val) >= 600);
+      }
+      if (prop === 'color') {
+        const val = d.split(':')[1].trim().toLowerCase().replace(/\s/g, '');
+        if (val === '#000000' || val === '#000' || val === 'black' || val === 'rgb(0,0,0)') return false;
+      }
+      if (prop === 'background-color') {
+        const val = d.split(':')[1].trim().toLowerCase().replace(/\s/g, '');
+        if (val === '#ffffff' || val === '#fff' || val === 'white' || val === 'transparent' || val === 'rgb(255,255,255)') return false;
+      }
+      return true;
+    });
+    if (kept.length === 0) return '<' + tag + before + after + '>';
+    return '<' + tag + before + ' style="' + kept.join('; ') + '"' + after + '>';
+  });
   for (let i = 0; i < 5; i++) html = html.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
   html = html.replace(/<p[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
   html = html.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
