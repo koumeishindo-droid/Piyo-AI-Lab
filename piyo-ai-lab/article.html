@@ -830,8 +830,19 @@
             }
 
             try {
-                const res = await fetch(API_BASE + '/article?id=' + encodeURIComponent(articleId));
-                const data = await res.json();
+                // ① 静的JSON（ビルド時生成）を優先
+                let data = null;
+                try {
+                    const staticRes = await fetch('/articles/' + encodeURIComponent(articleId) + '.json', { cache: 'no-cache' });
+                    if (staticRes.ok) data = await staticRes.json();
+                } catch (e) {}
+
+                // ② 静的になければ旧APIへフォールバック
+                if (!data) {
+                    const res = await fetch(API_BASE + '/article?id=' + encodeURIComponent(articleId));
+                    data = await res.json();
+                }
+
                 // APIの返り値が { article: {...} } でも { articles: [{...}] } でも対応
                 const article = data.article || (data.articles && data.articles[0]) || null;
 
