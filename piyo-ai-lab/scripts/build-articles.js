@@ -5,27 +5,45 @@
 // 出力:
 //   public/articles.json           ← 全記事の一覧（本文なし、軽量）
 //   public/articles/row-N.json     ← 個別記事（本文込み）
-//
-// Vercelビルド時に `npm run build` で実行されます。
 // ============================================
 
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 
-// ===== 認証 =====
-function getAuth(scopes) {
-  return new google.auth.GoogleAuth({
-    credentials: {
+// ===== 認証（GOOGLE_CREDENTIALS のJSON全体から読む形式） =====
+function parseCredentials() {
+  // 優先1: GOOGLE_CREDENTIALS（JSON文字列まるごと）
+  if (process.env.GOOGLE_CREDENTIALS) {
+    try {
+      const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+      return {
+        client_email: creds.client_email,
+        private_key: (creds.private_key || '').replace(/\\n/g, '\n'),
+      };
+    } catch (e) {
+      console.error('❌ GOOGLE_CREDENTIALS のJSON解析に失敗:', e.message);
+      return null;
+    }
+  }
+  // 優先2: 個別の環境変数
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+    return {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-    },
-    scopes,
-  });
+    };
+  }
+  return null;
 }
-const sheets = google.sheets({ version: 'v4', auth: getAuth(['https://www.googleapis.com/auth/spreadsheets.readonly']) });
-const drive  = google.drive({ version: 'v3', auth: getAuth(['https://www.googleapis.com/auth/drive.readonly']) });
+
+const creds = parseCredentials();
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
+
+function getAuth(scopes) {
+  return new google.auth.GoogleAuth({ credentials: creds, scopes });
+}
+const sheets = creds ? google.sheets({ version: 'v4', auth: getAuth(['https://www.googleapis.com/auth/spreadsheets.readonly']) }) : null;
+const drive  = creds ? google.drive({ version: 'v3', auth: getAuth(['https://www.googleapis.com/auth/drive.readonly']) }) : null;
 
 // ===== Google Docs HTML クリーンアップ =====
 function cleanGoogleDocsHtml(html) {
@@ -49,7 +67,7 @@ function cleanGoogleDocsHtml(html) {
 }
 
 async function getDocContent(docId) {
-  if (!docId) return '';
+  if (!docId || !drive) return '';
   try {
     const res = await drive.files.export({ fileId: docId, mimeType: 'text/html' });
     const bodyMatch = res.data.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
@@ -68,12 +86,15 @@ function getLevelLabel(level) {
 (async () => {
   console.log('🐣 ビルド開始：Google Sheets から記事一覧を取得...');
 
-  if (!SPREADSHEET_ID || !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL) {
-    console.warn('⚠️  Google認証情報がありません。空のJSONを出力します（ローカル開発時想定）');
+  if (!creds || !SPREADSHEET_ID) {
+    console.warn('⚠️  Google認証情報がありません（GOOGLE_CREDENTIALS / GOOGLE_SPREADSHEET_ID 必須）');
+    console.warn('    空のJSONを出力します（ローカル開発時想定）');
     fs.mkdirSync('public/articles', { recursive: true });
     fs.writeFileSync('public/articles.json', JSON.stringify({ articles: [], generatedAt: new Date().toISOString() }));
     return;
   }
+
+  console.log(`🔑 認証OK (service account: ${creds.client_email})`);
 
   const sheetRes = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
