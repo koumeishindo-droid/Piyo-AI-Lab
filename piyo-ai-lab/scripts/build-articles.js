@@ -21,7 +21,7 @@ const SITE = {
   url: 'https://piyoai.b-steep.com',
   defaultOgImage: 'https://piyoai.b-steep.com/images/ogp-default.png',
   locale: 'ja_JP',
-  twitter: '', // ある場合は @アカウント名
+  twitter: '',
 };
 
 // ===== 認証 =====
@@ -90,11 +90,10 @@ function getLevelLabel(level) {
   return ({ beginner: 'ひよこ', intermediate: '育ちざかり', advanced: 'にわとり' })[level] || level;
 }
 
-// HTMLエスケープ（メタタグ用）
 function escapeAttr(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-// 本文からプレーンテキスト抽出（AI/検索エンジン用、最初の160字）
+
 function extractPlainText(html, maxLen = 160) {
   const text = String(html || '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -106,7 +105,6 @@ function extractPlainText(html, maxLen = 160) {
   return text.length > maxLen ? text.slice(0, maxLen).trim() + '…' : text;
 }
 
-// ===== 静的ファイルを public/ にコピー =====
 function copyStaticFiles() {
   const itemsToCopy = ['index.html', 'article.html', 'admin.html', 'images', 'api'];
   fs.mkdirSync('public', { recursive: true });
@@ -121,9 +119,7 @@ function copyStaticFiles() {
     }
     console.log(`📄 copy: ${item} → ${dest}`);
   }
-}
-
-// ===== 個別記事の静的HTMLを生成（SEO/AEO最適化版） =====
+}// ===== 個別記事の静的HTMLを生成（SEO/AEO最適化版・完全静的） =====
 function generateArticleHtml(article) {
   const url = `${SITE.url}/article/${article.id}.html`;
   const title = `${article.title} | ${SITE.name}`;
@@ -135,7 +131,6 @@ function generateArticleHtml(article) {
   const ratings = Array.isArray(article.ratings) ? article.ratings : [];
   const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length) : 0;
 
-  // 構造化データ（Article + BreadcrumbList）
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -174,7 +169,6 @@ function generateArticleHtml(article) {
     ],
   };
 
-  // 表示用 数値
   const viewsDisplay = (article.views || 0).toLocaleString();
   const ratingDisplay = (Array.isArray(article.ratings) && article.ratings.length)
     ? avgRating.toFixed(1) : '-';
@@ -190,7 +184,6 @@ function generateArticleHtml(article) {
 <meta name="keywords" content="${escapeAttr([article.category, article.levelLabel, 'AI', 'AI活用', 'AI初心者'].filter(Boolean).join(','))}">
 <link rel="canonical" href="${url}">
 
-<!-- Open Graph -->
 <meta property="og:type" content="article">
 <meta property="og:title" content="${escapeAttr(article.title)}">
 <meta property="og:description" content="${escapeAttr(description)}">
@@ -202,17 +195,14 @@ function generateArticleHtml(article) {
 <meta property="article:author" content="${escapeAttr(article.author || SITE.name)}">
 <meta property="article:section" content="${escapeAttr(article.category || '')}">
 
-<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escapeAttr(article.title)}">
 <meta name="twitter:description" content="${escapeAttr(description)}">
 <meta name="twitter:image" content="${escapeAttr(ogImage)}">
 
-<!-- 構造化データ（Article） -->
 <script type="application/ld+json">
 ${JSON.stringify(articleSchema, null, 2)}
 </script>
-<!-- 構造化データ（BreadcrumbList） -->
 <script type="application/ld+json">
 ${JSON.stringify(breadcrumbSchema, null, 2)}
 </script>
@@ -430,21 +420,16 @@ ${article.content || ''}
 (function(){
   var articleId = document.querySelector('.article-card').dataset.articleId;
   var selectedRating = 0;
-
-  // 評価UI
   var stars = document.querySelectorAll('.star-btn');
   var rating = document.getElementById('star-rating');
   var submitBtn = document.getElementById('rating-submit');
   var thanks = document.getElementById('rating-thanks');
-
   stars.forEach(function(btn){
     btn.addEventListener('mouseenter', function(){
       var v = parseInt(btn.dataset.star);
       stars.forEach(function(s){ s.classList.toggle('active', parseInt(s.dataset.star) <= v); });
     });
-    btn.addEventListener('click', function(){
-      selectedRating = parseInt(btn.dataset.star);
-    });
+    btn.addEventListener('click', function(){ selectedRating = parseInt(btn.dataset.star); });
   });
   rating.addEventListener('mouseleave', function(){
     stars.forEach(function(s){ s.classList.toggle('active', parseInt(s.dataset.star) <= selectedRating); });
@@ -459,8 +444,6 @@ ${article.content || ''}
       if (res.ok) { submitBtn.style.display='none'; thanks.style.display='block'; }
     } catch (e) { console.error(e); alert('評価の送信に失敗しました。もう一度お試しください。'); }
   });
-
-  // 閲覧数+1（バックグラウンド）
   fetch('/api/views', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ articleId: articleId })
@@ -469,9 +452,7 @@ ${article.content || ''}
 </script>
 </body>
 </html>`;
-}
-
-// ===== sitemap.xml 生成 =====
+}// ===== sitemap.xml 生成 =====
 function generateSitemap(summaries) {
   const now = new Date().toISOString().slice(0, 10);
   const urls = [
@@ -583,16 +564,13 @@ ${JSON.stringify(orgSchema)}
 <!-- ===== /SEO Meta ===== -->
 `;
 
-  // 既存のSEOブロックを削除
   html = html.replace(/<!-- ===== SEO\/AEO Meta（自動生成） ===== -->[\s\S]*?<!-- ===== \/SEO Meta ===== -->\s*/g, '');
-  // </head>の直前に挿入
   html = html.replace(/<\/head>/i, seoBlock + '\n</head>');
-
   fs.writeFileSync(indexPath, html);
   console.log('🏷️  index.html にSEOメタタグを注入');
 }
 
-// ===== article.html にも基本メタを（フォールバックページ用） =====
+// ===== article.html に旧URLリダイレクト＆noindex =====
 function injectArticleHtmlSeo() {
   const p = 'public/article.html';
   if (!fs.existsSync(p)) return;
@@ -600,9 +578,8 @@ function injectArticleHtmlSeo() {
   const seoBlock = `
 <!-- ===== SEO/AEO Meta（自動生成） ===== -->
 <meta name="robots" content="noindex,follow">
-<!-- 注：このページは旧URL互換のフォールバック。SEO対象は /article/row-N.html 側 -->
+<!-- 旧URL互換のフォールバック。新URL（/article/row-N.html）にリダイレクト -->
 <script>
-  // 旧URL（/article.html?id=row-N）でアクセスされたら、新URL（/article/row-N.html）へリダイレクト
   (function(){
     var params = new URLSearchParams(window.location.search);
     var id = params.get('id');
@@ -675,9 +652,7 @@ function injectArticleHtmlSeo() {
     };
     const article = { ...meta, content };
 
-    // 個別記事JSON
     fs.writeFileSync(`public/articles/${id}.json`, JSON.stringify({ article }));
-    // 個別記事の静的HTML（SEO/AEO最適化済）
     fs.writeFileSync(`public/article/${id}.html`, generateArticleHtml(article));
 
     summaries.push(meta);
@@ -688,12 +663,10 @@ function injectArticleHtmlSeo() {
   fs.writeFileSync('public/articles.json',
     JSON.stringify({ articles: summaries, generatedAt: new Date().toISOString() }));
 
-  // sitemap.xml と robots.txt
   fs.writeFileSync('public/sitemap.xml', generateSitemap(summaries));
   fs.writeFileSync('public/robots.txt', generateRobotsTxt());
   console.log('🗺️  sitemap.xml / robots.txt を生成');
 
-  // index.html / article.html にメタタグ注入
   injectIndexSeo(summaries);
   injectArticleHtmlSeo();
 
