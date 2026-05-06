@@ -178,6 +178,7 @@ function generateArticleHtml(article) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google-site-verification" content="wCwTgq1JfM86uNH6AQ2lJOFOycibDkOo7KBXfJveKvs">
 <title>${escapeAttr(title)}</title>
 <meta name="description" content="${escapeAttr(description)}">
 <meta name="author" content="${escapeAttr(article.author || SITE.name)}">
