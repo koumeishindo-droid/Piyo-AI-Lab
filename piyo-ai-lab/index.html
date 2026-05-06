@@ -2065,7 +2065,7 @@
             document.querySelectorAll('.article-card').forEach(card => {
                 card.style.cursor = 'pointer';
                 card.addEventListener('click', () => {
-                    window.location.href = 'article.html?id=' + encodeURIComponent(card.dataset.id);
+                    window.location.href = '/article/' + encodeURIComponent(card.dataset.id) + '.html';
                 });
             });
         }
