@@ -82,9 +82,33 @@ function getLevelLabel(level) {
   return ({ beginner: 'ひよこ', intermediate: '育ちざかり', advanced: 'にわとり' })[level] || level;
 }
 
+// ===== 静的ファイルを public/ にコピー =====
+function copyStaticFiles() {
+  const itemsToCopy = [
+    'index.html',
+    'article.html',
+    'admin.html',
+    'images',
+    'api', // Vercel Functions（残しておく）
+  ];
+  fs.mkdirSync('public', { recursive: true });
+  for (const item of itemsToCopy) {
+    if (!fs.existsSync(item)) continue;
+    const dest = path.join('public', item);
+    const stat = fs.statSync(item);
+    if (stat.isDirectory()) {
+      fs.cpSync(item, dest, { recursive: true });
+    } else {
+      fs.copyFileSync(item, dest);
+    }
+    console.log(`📄 copy: ${item} → ${dest}`);
+  }
+}
+
 // ===== メイン処理 =====
 (async () => {
   console.log('🐣 ビルド開始：Google Sheets から記事一覧を取得...');
+  copyStaticFiles();
 
   if (!creds || !SPREADSHEET_ID) {
     console.warn('⚠️  Google認証情報がありません（GOOGLE_CREDENTIALS / GOOGLE_SPREADSHEET_ID 必須）');
