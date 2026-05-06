@@ -1,12 +1,19 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "builds": [
     { "src": "api/**/*.js", "use": "@vercel/node" },
     { "src": "index.html", "use": "@vercel/static" },
-    { "src": "images/**", "use": "@vercel/static" }
+    { "src": "article.html", "use": "@vercel/static" },
+    { "src": "admin.html", "use": "@vercel/static" },
+    { "src": "images/**", "use": "@vercel/static" },
+    { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/articles.json", "dest": "/public/articles.json", "headers": { "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400" } },
+    { "src": "/articles/(.*\\.json)", "dest": "/public/articles/$1", "headers": { "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400" } },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }
