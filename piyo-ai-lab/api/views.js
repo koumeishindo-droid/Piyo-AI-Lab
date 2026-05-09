@@ -1,6 +1,6 @@
 // ============================================
 // Vercel サーバーレス関数: /api/views
-// 記事が開かれたときに閲覧数を+1する
+// 記事が開かれたときに閲覧数を+1し、最新の閲覧数・評価を返す
 // ============================================
 
 const { getSheetsClient, SPREADSHEET_ID } = require('./_google');
@@ -25,7 +25,6 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: '記事IDが必要です' });
     }
 
-    // articleId は "row-2" のような形式 → 行番号を取得
     const rowNumber = parseInt(articleId.replace('row-', ''), 10);
     if (isNaN(rowNumber) || rowNumber < 2) {
       return res.status(400).json({ error: '無効な記事IDです' });
@@ -33,30 +32,43 @@ module.exports = async (req, res) => {
 
     const sheets = getSheetsClient();
 
-    // 現在の閲覧数を取得（J列 = 10列目）
+    // J列（閲覧数）と K列（評価データ）を一度に取得
     const currentData = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `記事管理!J${rowNumber}`,
+      range: `記事管理!J${rowNumber}:K${rowNumber}`,
     });
 
-    const currentViews =
-      currentData.data.values && currentData.data.values[0]
-        ? Number(currentData.data.values[0][0]) || 0
-        : 0;
+    const row = (currentData.data.values && currentData.data.values[0]) || [];
+    const currentViews = Number(row[0]) || 0;
+    const ratingsRaw = row[1] || '';
+
+    // 評価データをパース（カンマ or JSON配列形式に対応）
+    let ratings = [];
+    try {
+      if (ratingsRaw.trim().startsWith('[')) {
+        ratings = JSON.parse(ratingsRaw);
+      } else if (ratingsRaw.trim()) {
+        ratings = ratingsRaw.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+      }
+    } catch (e) {
+      ratings = [];
+    }
 
     // 閲覧数を+1して更新
+    const newViews = currentViews + 1;
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range: `記事管理!J${rowNumber}`,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[currentViews + 1]],
+        values: [[newViews]],
       },
     });
 
     res.status(200).json({
       success: true,
-      views: currentViews + 1,
+      views: newViews,
+      ratings: ratings,
     });
   } catch (error) {
     console.error('閲覧数更新エラー:', error);
