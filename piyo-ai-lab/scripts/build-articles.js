@@ -56,8 +56,44 @@ const drive  = creds ? google.drive({ version: 'v3', auth: getAuth(['https://www
 // ===== Google Docs HTML クリーンアップ =====
 function cleanGoogleDocsHtml(html) {
   html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-  html = html.replace(/\sclass="[^"]*"/gi, '');
+
+  // 1) スタイル属性を消す前に、意味のある装飾を semantic タグへ変換
+  // 太字: <span style="...font-weight:700|bold...">X</span> → <strong>X</strong>
+  html = html.replace(
+    /<span[^>]*style="[^"]*font-weight:\s*(?:bold|[6-9]\d{2})[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+    '<strong>$1</strong>'
+  );
+  // イタリック
+  html = html.replace(
+    /<span[^>]*style="[^"]*font-style:\s*italic[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+    '<em>$1</em>'
+  );
+  // 下線
+  html = html.replace(
+    /<span[^>]*style="[^"]*text-decoration:[^"]*underline[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+    '<u>$1</u>'
+  );
+  // 取り消し線
+  html = html.replace(
+    /<span[^>]*style="[^"]*text-decoration:[^"]*line-through[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+    '<s>$1</s>'
+  );
+
+  // 2) p / h / div の text-align をクラスに変換
+  html = html.replace(
+    /<(p|h[1-6]|div)([^>]*)\sstyle="([^"]*)"([^>]*)>/gi,
+    (match, tag, before, style, after) => {
+      const align = (style.match(/text-align:\s*(center|right|justify|left)/i) || [])[1];
+      const cls = align ? ` class="ta-${align.toLowerCase()}"` : '';
+      // styleは消す
+      return `<${tag}${before}${cls}${after}>`;
+    }
+  );
+
+  // 3) クラス・ID削除（ただし上で付けた ta-* は守る）
+  html = html.replace(/\sclass="(?!ta-)([^"]*)"/gi, '');
   html = html.replace(/\sid="[^"]*"/gi, '');
+
   html = html.replace(/href="https:\/\/www\.google\.com\/url\?q=([^&"]+)[^"]*"/gi,
     (m, url) => 'href="' + decodeURIComponent(url) + '"');
   html = html.replace(/(https:\/\/lh[0-9]*\.googleusercontent\.com\/[^"'\s>]+?)(?:=[^"'\s>]*)?(?=["'\s>])/gi, '$1=w800');
@@ -66,7 +102,10 @@ function cleanGoogleDocsHtml(html) {
     const alt = (attrs.match(/alt="([^"]*)"/i) || [])[1] || '';
     return '<img src="' + src + '" alt="' + alt + '" loading="lazy" style="max-width:100%;height:auto;">';
   });
+
+  // 4) 残りの style 属性を消す（imgは上で再構築済みなので除外）
   html = html.replace(/<(?!img)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
+  // 5) 装飾意味のない<span>を解体
   for (let i = 0; i < 5; i++) html = html.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
   html = html.replace(/<p[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
   html = html.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
@@ -283,6 +322,14 @@ nav.site-nav a:hover{color:var(--primary);background:var(--primary-soft)}
 .article-body h2{font-family:'Zen Maru Gothic',sans-serif;font-size:1.2rem;font-weight:900;margin:36px 0 16px;padding:12px 18px;background:var(--primary-soft);border-radius:var(--radius-sm);border-left:4px solid var(--primary);color:var(--text);letter-spacing:-.005em}
 .article-body h3{font-family:'Zen Maru Gothic',sans-serif;font-size:1.08rem;font-weight:900;margin:30px 0 14px;padding:10px 16px;background:var(--bg-sub);border-radius:var(--radius-sm);border-left:3px solid var(--primary-light);color:var(--text)}
 .article-body p{margin-bottom:18px}
+.article-body strong,.article-body b{font-weight:800;color:var(--text)}
+.article-body em,.article-body i{font-style:italic}
+.article-body u{text-decoration:underline;text-decoration-color:var(--primary-light);text-decoration-thickness:2px;text-underline-offset:3px}
+.article-body s,.article-body strike,.article-body del{text-decoration:line-through;color:var(--text-mute)}
+.article-body .ta-center{text-align:center}
+.article-body .ta-right{text-align:right}
+.article-body .ta-justify{text-align:justify}
+.article-body .ta-left{text-align:left}
 .article-body img{max-width:100%;height:auto;border-radius:var(--radius);margin:24px 0;box-shadow:var(--shadow)}
 .article-body code{background:var(--primary-soft);color:var(--primary-dark);padding:2px 8px;border-radius:6px;font-size:.88rem;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace}
 .article-body pre{background:#0f172a;color:#e0e7ef;padding:20px;border-radius:var(--radius);overflow-x:auto;margin:22px 0;font-size:.85rem;line-height:1.7;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace}
