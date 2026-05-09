@@ -206,15 +206,10 @@ function generateArticleHtml(article) {
     articleSection: article.category,
     inLanguage: 'ja',
   };
-  if (ratings.length >= 1) {
-    articleSchema.aggregateRating = {
-      '@type': 'AggregateRating',
-      ratingValue: avgRating.toFixed(1),
-      ratingCount: ratings.length,
-      bestRating: 5,
-      worstRating: 1,
-    };
-  }
+  // 注意: Article 型は Google のレビュースニペット対象外のため
+  // aggregateRating を含めると Search Console で
+  // 「<parent_node> のオブジェクトタイプが無効」エラーになる。
+  // 星評価は内部表示のみで使用し、構造化データには含めない。
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
