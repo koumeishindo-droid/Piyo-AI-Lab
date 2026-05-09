@@ -90,6 +90,19 @@ function getLevelLabel(level) {
   return ({ beginner: 'ひよこ', intermediate: '育ちざかり', advanced: 'にわとり' })[level] || level;
 }
 
+// Google Drive のサムネイルURLを高解像度版に変換
+// 例: https://drive.google.com/thumbnail?id=XXX → ...?id=XXX&sz=w1200
+function upgradeDriveThumbUrl(url) {
+  if (!url) return '';
+  if (!/drive\.google\.com\/thumbnail/i.test(url)) return url;
+  // 既に sz パラメータがあれば w1200 に置き換え
+  if (/[?&]sz=/i.test(url)) {
+    return url.replace(/([?&]sz=)[^&]*/i, '$1w1200');
+  }
+  // sz パラメータが無ければ追加
+  return url + (url.includes('?') ? '&' : '?') + 'sz=w1200';
+}
+
 // HTMLエスケープ（メタタグ用）
 function escapeAttr(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -679,7 +692,7 @@ function injectArticleHtmlSeo() {
       levelLabel: getLevelLabel(level),
       excerpt: row[5] || '',
       thumb: row[6] || '',
-      thumbImage: row[7] || '',
+      thumbImage: upgradeDriveThumbUrl(row[7] || ''),
       date: row[4] || '',
       views: Number(row[9]) || 0,
       ratings: JSON.parse(row[10] || '[]'),
