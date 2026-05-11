@@ -297,6 +297,9 @@ nav.site-nav a:hover{color:var(--primary);background:var(--primary-soft)}
 .article-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border-light)}
 .article-top-bar{height:4px;background:linear-gradient(90deg,var(--primary),var(--primary-light),var(--orange))}
 .article-header-area{padding:44px 48px 28px;border-bottom:1px solid var(--border)}
+.article-hero-thumb{width:100%;background:var(--bg-soft);border-bottom:1px solid var(--border)}
+.article-hero-thumb img{display:block;width:100%;height:auto;max-height:480px;object-fit:cover}
+@media(max-width:640px){.article-hero-thumb img{max-height:280px}}
 .article-meta-top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .meta-tag{padding:5px 14px;border-radius:99px;font-weight:700;font-size:.72rem;letter-spacing:.04em}
 .meta-category{background:var(--bg-soft);color:var(--text)}
@@ -427,6 +430,8 @@ footer.site-footer p{font-size:.78rem;color:var(--text-mute)}
         </div>
       </header>
     </div>
+
+    ${article.thumbImage ? `<div class="article-hero-thumb"><img src="${escapeAttr(article.thumbImage)}" alt="${escapeAttr(article.title)}" loading="eager"></div>` : ''}
 
     <div class="article-body-area">
       <div class="article-body">
