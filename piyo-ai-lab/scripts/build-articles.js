@@ -53,31 +53,100 @@ function getAuth(scopes) {
 const sheets = creds ? google.sheets({ version: 'v4', auth: getAuth(['https://www.googleapis.com/auth/spreadsheets.readonly']) }) : null;
 const drive  = creds ? google.drive({ version: 'v3', auth: getAuth(['https://www.googleapis.com/auth/drive.readonly']) }) : null;
 
+// ===== 温存するCSSプロパティ（色・背景色・文字サイズ） =====
+// ※ 太字/斜体/下線/取消線 は後段で <strong>/<em>/<u>/<s> に変換するため
+//   ここでは色・背景・サイズの3つに絞る（重複適用を避ける）
+const PRESERVE_STYLE_PROPS = ['color', 'background-color', 'font-size'];
+
+// <style>タグ内のクラス定義を抽出（例: ".c5{color:#ff0000}" → { c5: "color:#ff0000" }）
+function parseClassStyles(html) {
+  const result = {};
+  const m = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  if (!m) return result;
+  const re = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+  let r;
+  while ((r = re.exec(m[1])) !== null) result[r[1]] = r[2];
+  return result;
+}
+
+// スタイル宣言を許可リストに絞って組み直す（色・背景・サイズのみ温存）
+function sanitizeStyle(styleStr) {
+  if (!styleStr) return '';
+  const kept = {};
+  styleStr.split(';').forEach((decl) => {
+    const idx = decl.indexOf(':');
+    if (idx === -1) return;
+    const prop = decl.substring(0, idx).trim().toLowerCase();
+    const value = decl.substring(idx + 1).trim();
+    if (!PRESERVE_STYLE_PROPS.includes(prop) || !value) return;
+    if (prop === 'color' && /^(#000(000)?|black|rgb\(\s*0\s*,\s*0\s*,\s*0\s*\))$/i.test(value)) return;
+    if (prop === 'background-color' && /^(transparent|#fff(fff)?|white|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))$/i.test(value)) return;
+    // Google Docsの本文既定サイズ（10〜12pt）はノイズなので捨てる
+    if (prop === 'font-size') {
+      const numMatch = value.match(/^([\d.]+)\s*pt$/i);
+      if (numMatch) {
+        const num = parseFloat(numMatch[1]);
+        if (num >= 10 && num <= 12) return;
+      }
+    }
+    kept[prop] = value;
+  });
+  return Object.entries(kept).map(([k, v]) => `${k}:${v}`).join(';');
+}
+
 // ===== Google Docs HTML クリーンアップ =====
 function cleanGoogleDocsHtml(html) {
+  // 0) <style>からクラス定義を抽出し、各<span>のクラス由来styleを既存のインラインstyleへ合成
+  //    （Google Docsは色やサイズをクラスで指定することがあるため、後段の semantic 変換と
+  //      sanitize がスタイルを拾えるよう、削除前にインライン化しておく）
+  const classStyles = parseClassStyles(html);
+  html = html.replace(/<span\b([^>]*)>/gi, (m, attrs) => {
+    const classM = attrs.match(/\sclass="([^"]*)"/i);
+    const styleM = attrs.match(/\sstyle="([^"]*)"/i);
+    let combined = '';
+    if (classM) {
+      classM[1].split(/\s+/).forEach((c) => {
+        if (classStyles[c]) combined += classStyles[c] + ';';
+      });
+    }
+    if (styleM) combined += styleM[1];
+    if (!combined) return m;
+    const cleanAttrs = attrs.replace(/\sclass="[^"]*"/i, '').replace(/\sstyle="[^"]*"/i, '');
+    return `<span${cleanAttrs} style="${combined}">`;
+  });
+
   html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
   // 1) スタイル属性を消す前に、意味のある装飾を semantic タグへ変換
-  // 太字: <span style="...font-weight:700|bold...">X</span> → <strong>X</strong>
-  html = html.replace(
-    /<span[^>]*style="[^"]*font-weight:\s*(?:bold|[6-9]\d{2})[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
-    '<strong>$1</strong>'
-  );
+  //    ※ 同じspanに色やサイズが乗っている場合は、semanticタグに style として引き継ぐ
+  //      （例: <span style="color:red;text-decoration:line-through">X</span>
+  //         → <s style="color:red">X</s>）
+  const convertSemantic = (input, decorPattern, semanticTag) => {
+    return input.replace(
+      /<span([^>]*?)\sstyle="([^"]*)"([^>]*)>([\s\S]*?)<\/span>/gi,
+      (match, before, style, after, content) => {
+        if (!decorPattern.test(style)) return match; // この装飾がなければそのまま
+        const preserved = sanitizeStyle(style);
+        const styleAttr = preserved ? ` style="${preserved}"` : '';
+        return `<${semanticTag}${styleAttr}>${content}</${semanticTag}>`;
+      }
+    );
+  };
+  // 太字
+  html = convertSemantic(html, /font-weight:\s*(?:bold|[6-9]\d{2})/i, 'strong');
   // イタリック
-  html = html.replace(
-    /<span[^>]*style="[^"]*font-style:\s*italic[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
-    '<em>$1</em>'
-  );
+  html = convertSemantic(html, /font-style:\s*italic/i, 'em');
   // 下線
-  html = html.replace(
-    /<span[^>]*style="[^"]*text-decoration:[^"]*underline[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
-    '<u>$1</u>'
-  );
+  html = convertSemantic(html, /text-decoration:[^;]*\bunderline\b/i, 'u');
   // 取り消し線
-  html = html.replace(
-    /<span[^>]*style="[^"]*text-decoration:[^"]*line-through[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
-    '<s>$1</s>'
-  );
+  html = convertSemantic(html, /text-decoration:[^;]*\bline-through\b/i, 's');
+
+  // 1.5) 残った <span style="..."> を sanitize（色・背景・サイズだけ温存、他は捨てる）
+  html = html.replace(/<span\b([^>]*?)\sstyle="([^"]*)"([^>]*)>/gi, (m, before, style, after) => {
+    const sanitized = sanitizeStyle(style);
+    if (!sanitized) return `<span${before}${after}>`;
+    return `<span${before}${after} style="${sanitized}">`;
+  });
 
   // 2) p / h / div の text-align をクラスに変換
   html = html.replace(
@@ -103,10 +172,12 @@ function cleanGoogleDocsHtml(html) {
     return '<img src="' + src + '" alt="' + alt + '" loading="lazy" style="max-width:100%;height:auto;">';
   });
 
-  // 4) 残りの style 属性を消す（imgは上で再構築済みなので除外）
-  html = html.replace(/<(?!img)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
-  // 5) 装飾意味のない<span>を解体
-  for (let i = 0; i < 5; i++) html = html.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+  // 4) 残りの style 属性を消す
+  //    img/span は除外（span は 1.5 で sanitize 済み）。
+  //    strong/em/u/s も除外（semantic変換時に色やサイズを引き継いでいる場合があるため）。
+  html = html.replace(/<(?!img\b|span\b|strong\b|em\b|u\b|s\b)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
+  // 5) style属性を持たない<span>のみ解体（色・背景・サイズを持つspanは温存）
+  for (let i = 0; i < 5; i++) html = html.replace(/<span(?![^>]*\sstyle=)[^>]*>([\s\S]*?)<\/span>/gi, '$1');
   html = html.replace(/<p[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '');
   html = html.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
   html = html.replace(/\n{3,}/g, '\n\n');
@@ -160,7 +231,7 @@ function extractPlainText(html, maxLen = 160) {
 
 // ===== 静的ファイルを public/ にコピー =====
 function copyStaticFiles() {
-  const itemsToCopy = ['index.html', 'article.html', 'admin.html', 'images', 'api'];
+  const itemsToCopy = ['index.html', 'article.html', 'images', 'api'];
   fs.mkdirSync('public', { recursive: true });
   for (const item of itemsToCopy) {
     if (!fs.existsSync(item)) continue;
@@ -563,7 +634,6 @@ function generateRobotsTxt() {
   return `# Piyo AI Lab - robots.txt
 User-agent: *
 Allow: /
-Disallow: /admin.html
 Disallow: /api/
 
 # AI クローラー（AEO対策で明示的に許可）
