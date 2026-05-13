@@ -2,6 +2,7 @@
 // Vercel サーバーレス関数: /api/article
 // 指定された1記事のデータ（本文を含む）を取得する
 // 記事ページ（article.html）専用の軽量APIです。
+// Google Docs上の色・サイズ等の装飾は cleanGoogleDocsHtml で温存します。
 // ============================================
 
 const { getSheetsClient, getDriveClient, SPREADSHEET_ID } = require('./_google');
@@ -12,7 +13,6 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // 個別記事を1時間キャッシュ（Vercel CDN）
-  // 期限切れ後も60秒間は古いデータを返しつつ裏で更新
   res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=60');
 
   if (req.method === 'OPTIONS') {
@@ -26,7 +26,6 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: '記事IDが必要です（例: ?id=row-2）' });
     }
 
-    // articleId は "row-2" のような形式 → 行番号を取得
     const rowNumber = parseInt(articleId.replace('row-', ''), 10);
     if (isNaN(rowNumber) || rowNumber < 2) {
       return res.status(400).json({ error: '無効な記事IDです' });
@@ -34,7 +33,6 @@ module.exports = async (req, res) => {
 
     const sheets = getSheetsClient();
 
-    // 指定行だけを取得（A列〜M列）
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `記事管理!A${rowNumber}:M${rowNumber}`,
@@ -49,7 +47,6 @@ module.exports = async (req, res) => {
     const docId = row[8] || '';
     let content = '';
 
-    // GoogleドキュメントIDがあれば本文をHTMLで取得
     if (docId) {
       content = await getDocContent(docId);
     }
@@ -107,20 +104,95 @@ async function getDocContent(docId) {
 }
 
 // ============================================
+// Google Docs HTML から温存したいCSSプロパティの許可リスト
+// （色・背景色・文字サイズ・太さ・斜体・下線/取り消し線）
+// ============================================
+const PRESERVE_STYLE_PROPS = [
+  'color',
+  'background-color',
+  'font-size',
+  'font-weight',
+  'font-style',
+  'text-decoration',
+];
+
+// <style>タグ内のクラス定義を抽出（例: ".c5{color:#ff0000}" → { c5: "color:#ff0000" }）
+function parseClassStyles(html) {
+  const result = {};
+  const m = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  if (!m) return result;
+  const re = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+  let r;
+  while ((r = re.exec(m[1])) !== null) {
+    result[r[1]] = r[2];
+  }
+  return result;
+}
+
+// スタイル宣言を許可リストに絞って組み直す
+// （font-family や margin といったノイズは捨て、色・サイズなどは残す）
+function sanitizeStyle(styleStr) {
+  if (!styleStr) return '';
+  const kept = {};
+  styleStr.split(';').forEach((decl) => {
+    const idx = decl.indexOf(':');
+    if (idx === -1) return;
+    const prop = decl.substring(0, idx).trim().toLowerCase();
+    const value = decl.substring(idx + 1).trim();
+    if (!PRESERVE_STYLE_PROPS.includes(prop) || !value) return;
+    if (prop === 'color' && /^(#000(000)?|black|rgb\(\s*0\s*,\s*0\s*,\s*0\s*\))$/i.test(value)) return;
+    if (prop === 'background-color' && /^(transparent|#fff(fff)?|white|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))$/i.test(value)) return;
+    if (prop === 'font-weight' && /^(normal|400)$/i.test(value)) return;
+    if (prop === 'font-style' && /^normal$/i.test(value)) return;
+    if (prop === 'text-decoration' && /^none$/i.test(value)) return;
+    // Google Docsの本文既定サイズ（10〜12pt）はノイズなので捨てる
+    if (prop === 'font-size') {
+      const numMatch = value.match(/^([\d.]+)\s*pt$/i);
+      if (numMatch) {
+        const num = parseFloat(numMatch[1]);
+        if (num >= 10 && num <= 12) return;
+      }
+    }
+    kept[prop] = value;
+  });
+  return Object.entries(kept).map(([k, v]) => `${k}:${v}`).join(';');
+}
+
+// ============================================
 // Google DocsのHTMLをクリーンアップ
-// 不要なラッパー・スタイル・属性を整理して、
-// サイトのデザイン（Inter / Noto Sans JP / line-height:2）に
-// しっかり馴染むようにします。
+// 色・背景色・文字サイズ・太さ/斜体/下線/取消線などの装飾は温存します。
 // ============================================
 
 function cleanGoogleDocsHtml(html) {
+  // ⓪ <style>からクラス定義を抽出（後で<span>にインライン化するため、削除前に実行）
+  const classStyles = parseClassStyles(html);
+
+  // ⓪b 各<span>に、クラス由来＋既存インラインのstyleを合成→sanitize→単一のstyle属性へ
+  html = html.replace(/<span\b([^>]*)>/gi, (m, attrs) => {
+    const classM = attrs.match(/\sclass="([^"]*)"/i);
+    const styleM = attrs.match(/\sstyle="([^"]*)"/i);
+    let combined = '';
+    if (classM) {
+      classM[1].split(/\s+/).forEach((c) => {
+        if (classStyles[c]) combined += classStyles[c] + ';';
+      });
+    }
+    if (styleM) combined += styleM[1];
+    const sanitized = sanitizeStyle(combined);
+    const cleanAttrs = attrs
+      .replace(/\sclass="[^"]*"/i, '')
+      .replace(/\sstyle="[^"]*"/i, '');
+    if (sanitized) return `<span${cleanAttrs} style="${sanitized}">`;
+    return `<span${cleanAttrs}>`;
+  });
+
   // ① <style>タグを完全除去（Google Docs既定の大量CSS）
   html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
-  // ② class属性を除去（"c1" "c2" ...のような一意なクラス名）
+  // ② class属性を除去
   html = html.replace(/\sclass="[^"]*"/gi, '');
 
-  // ③ id属性を除去（"h.abc123" など）
+  // ③ id属性を除去
   html = html.replace(/\sid="[^"]*"/gi, '');
 
   // ④ Googleリダイレクトリンクを直リンクに変換
@@ -129,7 +201,7 @@ function cleanGoogleDocsHtml(html) {
     (m, url) => 'href="' + decodeURIComponent(url) + '"'
   );
 
-  // ⑤ Google画像URLにサイズ制限を追加（幅800px、軽量化）
+  // ⑤ Google画像URLにサイズ制限を追加（幅800px）
   html = html.replace(
     /(https:\/\/lh[0-9]*\.googleusercontent\.com\/[^"'\s>]+?)(?:=[^"'\s>]*)?(?=["'\s>])/gi,
     '$1=w800'
@@ -147,12 +219,12 @@ function cleanGoogleDocsHtml(html) {
     }
   );
 
-  // ⑦ すべての style 属性を除去（imgは⑥で再付与済みなので除外）
-  html = html.replace(/<(?!img)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
+  // ⑦ style属性を除去（imgは⑥で再付与済み、spanは⓪bでsanitize済みのため除外）
+  html = html.replace(/<(?!img\b|span\b)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
 
-  // ⑧ <span>タグをアンラップ（中身だけ残す）
+  // ⑧ style属性を持たない<span>のみアンラップ（色・サイズ等を持つspanは温存）
   for (let i = 0; i < 5; i++) {
-    html = html.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+    html = html.replace(/<span(?![^>]*\sstyle=)[^>]*>([\s\S]*?)<\/span>/gi, '$1');
   }
 
   // ⑨ 空の段落を除去
