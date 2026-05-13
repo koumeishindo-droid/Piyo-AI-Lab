@@ -111,13 +111,94 @@ async function getDocContent(docId) {
 }
 
 // ============================================
+// Google Docs HTML から温存したいCSSプロパティの許可リスト
+// （色・背景色・文字サイズ・太さ・斜体・下線/取り消し線）
+// ============================================
+const PRESERVE_STYLE_PROPS = [
+  'color',
+  'background-color',
+  'font-size',
+  'font-weight',
+  'font-style',
+  'text-decoration',
+];
+
+// <style>タグ内のクラス定義を抽出（例: ".c5{color:#ff0000}" → { c5: "color:#ff0000" }）
+function parseClassStyles(html) {
+  const result = {};
+  const m = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  if (!m) return result;
+  const re = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+  let r;
+  while ((r = re.exec(m[1])) !== null) {
+    result[r[1]] = r[2];
+  }
+  return result;
+}
+
+// スタイル宣言を許可リストに絞って組み直す
+// （font-family や margin といったノイズは捨て、色・サイズなどは残す）
+function sanitizeStyle(styleStr) {
+  if (!styleStr) return '';
+  const kept = {};
+  styleStr.split(';').forEach((decl) => {
+    const idx = decl.indexOf(':');
+    if (idx === -1) return;
+    const prop = decl.substring(0, idx).trim().toLowerCase();
+    const value = decl.substring(idx + 1).trim();
+    if (!PRESERVE_STYLE_PROPS.includes(prop) || !value) return;
+    // 既定値っぽいものは省略（黒文字・白背景・通常太さなど）
+    if (prop === 'color' && /^(#000(000)?|black|rgb\(\s*0\s*,\s*0\s*,\s*0\s*\))$/i.test(value)) return;
+    if (prop === 'background-color' && /^(transparent|#fff(fff)?|white|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))$/i.test(value)) return;
+    if (prop === 'font-weight' && /^(normal|400)$/i.test(value)) return;
+    if (prop === 'font-style' && /^normal$/i.test(value)) return;
+    if (prop === 'text-decoration' && /^none$/i.test(value)) return;
+    // Google Docsの本文既定サイズ（10〜12pt）はノイズなので捨てる
+    // ユーザーが明示的に大きく/小さくした場合（14pt以上、9pt以下など）のみ温存
+    if (prop === 'font-size') {
+      const numMatch = value.match(/^([\d.]+)\s*pt$/i);
+      if (numMatch) {
+        const num = parseFloat(numMatch[1]);
+        if (num >= 10 && num <= 12) return;
+      }
+    }
+    kept[prop] = value;
+  });
+  return Object.entries(kept).map(([k, v]) => `${k}:${v}`).join(';');
+}
+
+// ============================================
 // Google DocsのHTMLをクリーンアップ
 // 不要なラッパー・スタイル・属性を整理して、
 // サイトのデザイン（Inter / Noto Sans JP / line-height:2）に
 // しっかり馴染むようにします。
+// 色・背景色・文字サイズ・太さ/斜体/下線/取消線などの装飾は温存します。
 // ============================================
 
 function cleanGoogleDocsHtml(html) {
+  // ⓪ <style>からクラス定義を抽出（後で<span>にインライン化するため、削除前に実行）
+  const classStyles = parseClassStyles(html);
+
+  // ⓪b 各<span>に、クラス由来＋既存インラインのstyleを合成→sanitize→単一のstyle属性へ
+  //    こうしておくと、後工程で他の style 属性が消されても色やサイズは生き残る
+  html = html.replace(/<span\b([^>]*)>/gi, (m, attrs) => {
+    const classM = attrs.match(/\sclass="([^"]*)"/i);
+    const styleM = attrs.match(/\sstyle="([^"]*)"/i);
+    let combined = '';
+    if (classM) {
+      classM[1].split(/\s+/).forEach((c) => {
+        if (classStyles[c]) combined += classStyles[c] + ';';
+      });
+    }
+    if (styleM) combined += styleM[1];
+    const sanitized = sanitizeStyle(combined);
+    const cleanAttrs = attrs
+      .replace(/\sclass="[^"]*"/i, '')
+      .replace(/\sstyle="[^"]*"/i, '');
+    if (sanitized) return `<span${cleanAttrs} style="${sanitized}">`;
+    return `<span${cleanAttrs}>`;
+  });
+
   // ① <style>タグを完全除去（Google Docs既定の大量CSS）
   html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
@@ -153,13 +234,14 @@ function cleanGoogleDocsHtml(html) {
     }
   );
 
-  // ⑦ すべての style 属性を除去（フォント・行間・マージン等を一掃）
-  //   ⑥で <img> のスタイルは再付与済みなので、ここで他のタグの style を消す
-  html = html.replace(/<(?!img)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
+  // ⑦ style属性を除去（imgは⑥で再付与済み、spanは⓪bでsanitize済みのため除外）
+  //   フォント・行間・マージン等のノイジーなスタイルは引き続き一掃する
+  html = html.replace(/<(?!img\b|span\b)([a-z][a-z0-9]*)([^>]*?)\sstyle="[^"]*"([^>]*)>/gi, '<$1$2$3>');
 
-  // ⑧ <span>タグをアンラップ（中身だけ残す。深いネスト対応で複数回）
+  // ⑧ style属性を持たない<span>のみアンラップ（色・サイズ等を持つspanは温存）
+  //   深いネスト対応で複数回まわす
   for (let i = 0; i < 5; i++) {
-    html = html.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, '$1');
+    html = html.replace(/<span(?![^>]*\sstyle=)[^>]*>([\s\S]*?)<\/span>/gi, '$1');
   }
 
   // ⑨ 空の段落を除去
